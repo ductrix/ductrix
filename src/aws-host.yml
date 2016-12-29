@@ -1,0 +1,16 @@
+- name: add database
+  become: true
+  gather_facts: true
+  hosts: awshostname
+  remote_user: ec2-user
+  roles:
+  - role: role-server-prep
+    tags: server-prep, default
+  - role: role-aws-host-prep
+    tags: setup-aws-host,default
+  - role: role-repo-epel
+    tags: setup-epel,default
+  - role: role-mysql
+    tags: install-mysql
+  - role: role-postgresql
+    tags: install-postgres

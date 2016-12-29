@@ -1,0 +1,174 @@
+<!doctype html>
+<html class="layout-pf layout-pf-fixed">
+
+<head>
+{% block head %}
+<!-- PatternFly Styles -->
+<!-- Note: No other CSS files are needed regardless of what other JS packages located in patternfly/components that you decide to pull in -->
+<link rel="stylesheet" href="/node_modules/patternfly/dist/css/patternfly.min.css">
+<link rel="stylesheet" href="/node_modules/patternfly/dist/css/patternfly-additions.min.css">
+<!-- jQuery -->
+<script src="/node_modules/patternfly/node_modules/jquery/dist/jquery.min.js"></script>
+
+<!-- Bootstrap JS -->
+<script src="/node_modules/patternfly/node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+
+<!-- C3, D3 - Charting Libraries -->
+<script src="/node_modules/patternfly/node_modules/c3/c3.min.js"></script>
+<script src="/node_modules/patternfly/node_modules/d3/d3.min.js"></script>
+
+<!-- Datatables, jQuery Grid Component -->
+<!-- Note: jquery.dataTables.js must occur in the html source before patternfly*.js.
+<script src="/node_modules/patternfly/node_modules/datatables/media/js/jquery.dataTables.min.js"></script>
+<script src="/node_modules/patternfly/node_modules/datatables-colvis/js/dataTables.colVis.js"></script>
+<script src="/node_modules/patternfly/node_modules/datatables/media/js/jquery.dataTables.js"></script>
+-->
+<!-- PatternFly Custom Componets -  Sidebar, Popovers and Datatables Customizations -->
+<!-- Note: jquery.dataTables.js must occur in the html source before patternfly*.js.-->
+<script src="/node_modules/patternfly/dist/js/patternfly.min.js"></script>
+
+<!-- Bootstrap Combobox -->
+<script src="/node_modules/patternfly/node_modules/bootstrap-combobox/js/bootstrap-combobox.js"></script>
+
+<!-- Bootstrap Date Picker -->
+<script src="/node_modules/patternfly/node_modules/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js"></script>
+
+<!-- Moment - required by Bootstrap Dae Time Picker -->
+<script src="/node_modules/patternfly/node_modules/moment/min/moment.min.js"></script>
+
+<!-- Bootstrap Date Time Picker - requres Moment -->
+<script src="/node_modules/patternfly/node_modules/eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min.js"></script>
+
+<!-- Bootstrap Select -->
+<script src="/node_modules/patternfly/node_modules/bootstrap-select/dist/js/bootstrap-select.min.js"></script>
+
+<!-- Bootstrap Switch -->
+<script src="/node_modules/patternfly/node_modules/bootstrap-switch/dist/js/bootstrap-switch.min.js"></script>
+
+<!-- Bootstrap Touchspin -->
+<script src="/node_modules/patternfly/node_modules/bootstrap-touchspin/dist/jquery.bootstrap-touchspin.min.js"></script>
+
+<!-- Bootstrap Tree View -->
+<script src="/node_modules/patternfly/node_modules/patternfly-bootstrap-treeview/dist/bootstrap-treeview.min.js"></script>
+
+<!-- Google Code Prettify - Syntax higlighting of code snippets -->
+<script src="/node_modules/patternfly/node_modules/google-code-prettify/bin/prettify.min.js"></script>
+
+<!-- MatchHeight - Used to make sure dshboard cards are the same height -->
+<script src="/node_modules/patternfly/node_modules/matchHeight/jquery.matchHeight-min.js"></script>
+
+<!-- Angular Application? You May Want to Consider Pulling Angular-PatternFly And Angular-UI Bootstrap instead of bootstrap.js -->
+<!-- See https://github.com/patternfly/angular-patternfly for more information -->
+<title>{% block title %}{% endblock %} - ductrix</title>
+{% endblock %}
+</head>
+<body class="cards-pf">
+
+  <nav class="navbar navbar-pf-vertical">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a href="/" class="navbar-brand">
+          <!-- <img class="navbar-brand-icon" src="/img/ductrix-gear-small2.png" alt=""/><img class="navbar-brand-name" src="/img/brand-alt.svg" alt="Ductrix Databases as Service" /> -->
+          <img class="navbar-brand-icon" src="/img/ductrix-gear-small2.png" alt="ductrix-logo"/>ductrix
+        </a>
+      </div>
+  <nav class="collapse navbar-collapse">
+    <ul class="nav navbar-nav">
+      <li><a href="#" target="_blank" class="nav-item-iconic nav-item-iconic-new-window"><span title="Launch" class="fa fa-external-link"></span></a></li>
+    </ul>
+    <ul class="nav navbar-nav navbar-right navbar-iconic">
+      <li class="dropdown">
+        <a class="dropdown-toggle nav-item-iconic" id="notifications" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+          <span title="Notifications" class="fa pficon-flag"></span>
+          <span class="badge">2</span>
+        </a>
+        <div class="dropdown-menu infotip bottom-right">
+          <div class="arrow"></div>
+          <ul class="list-group">
+            <li class="list-group-item">
+              <span class="i pficon pficon-info"></span> Modified Datasources ExampleDS
+            </li>
+            <li class="list-group-item">
+              <span class="i pficon pficon-info"></span> Error: System Failure
+            </li>
+          </ul>
+          <div class="footer">
+            <a>Clear Messages</a>
+          </div>
+        </div>
+      </li>
+      <li class="dropdown">
+        <a class="dropdown-toggle nav-item-iconic" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+          <span title="Help" class="fa pficon-help"></span>
+          <span class="caret"></span>
+        </a>
+        <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+          <li><a href="#">Help</a></li>
+          <li><a href="#">About</a></li>
+        </ul>
+      </li>
+      <li class="dropdown">
+        <a class="dropdown-toggle nav-item-iconic" id="dropdownMenu2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+          <span title="Username" class="fa pficon-user"></span>
+          <span class="caret"></span>
+        </a>
+        <ul class="dropdown-menu" aria-labelledby="dropdownMenu2">
+          <li><a href="#">Preferences</a></li>
+          <li><a href="#">Logout</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+</nav> 
+
+<div class="nav-pf-vertical nav-pf-vertical-with-sub-menus hide-nav-pf ">
+  <ul class="list-group">
+    <li class="list-group-item {% block dash_active %} {% endblock %}">
+      <a href="/">
+        <span class="fa fa-dashboard" data-toggle="tooltip" title="Dashboard"></span>
+        <span class="list-group-item-value">Dashboard</span>
+      </a>
+    </li>
+    <li class="list-group-item {% block db_active %} {% endblock %}">
+      <a href="/databases">
+        <span class="fa fa-database" data-toggle="tooltip" title="Databases"></span>
+        <span class="list-group-item-value">Databases</span>
+      </a>
+    </li>
+    <li class="list-group-item {% block srv_active %} {% endblock %}">
+      <a href="/servers">
+        <span class="pficon pficon-container-node" data-toggle="tooltip" title="Servers"></span>
+        <span class="list-group-item-value">Servers</span>
+      </a>
+    </li>
+    
+    <li class="list-group-item {% block pool_active %} {% endblock %}">
+      <a href="/pools">
+        <span class="pficon pficon-cluster" data-toggle="tooltip" title="Compute Pools"></span>
+        <span class="list-group-item-value">Compute Pools</span>
+      </a>
+      
+    </li>
+    <li class="list-group-item {% block tasks_active %} {% endblock %}">
+      <a href="/tasks">
+        <span class="fa fa-refresh" data-toggle="tooltip" title="Tasks"></span>
+        <span class="list-group-item-value">Tasks</span>
+      </a>
+      
+    </li>
+  </ul>
+      
+</div>
+<div class="container-fluid container-cards-pf container-pf-nav-pf-vertical ">
+{% block content %} {% endblock %}
+</div>
+</body>
+{% block scripts %} 
+
+{% endblock %}
+</html>

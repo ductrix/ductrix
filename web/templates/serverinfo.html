@@ -1,0 +1,50 @@
+{% extends "navigation.html" %}
+
+{% block srv_active %}active{% endblock %}
+{% block title %}Servers{% endblock %}
+{% block content %}
+ 
+  {% if message %}
+        {{ message | safe }} 
+    {%  endif %}
+
+    <div class="embed-responsive embed-responsive-16by9" >
+        <div class="spinner spinner-lg"></div>
+      <iframe id="graphs" scrolling="yes" class="embed-responsive-item" id="overview_frame"  src="{{ serverconn }}"</iframe>
+    </div>
+      <!-- <iframe id="graphs" scrolling="yes" class="embed-responsive-item" id="overview_frame"  src="https://192.168.1.107/dashboard/db/server-data?editorTab=Metrics&from=1476756439323&to=1476771817309&var-Server=KPORACLE1&theme=light"</iframe> -->
+{% endblock%}
+
+{% block scripts %}
+<script>
+(function($){ 
+    $(function(){ // <---add this block from here to
+      var fire = {
+        init:function(){
+            $('#sub').on('click', function(){
+                $('#graphs').contents().find('.navbar-inner').hide();
+            });
+        }
+      };
+      fire.init();
+  }); //<----here
+}(jQuery));
+
+  function showFrame(name) {
+    console.log(name);
+    frames = ["overview", "storage", "network", "messages", "terminal" ];
+    for (i = 0; i < frames.length; i++) {
+        if (name == frames[i]) {
+            console.log(name);
+            console.log(name+'_frame');
+            document.getElementById(name+'_frame').style.display = "block";
+        }
+        else {
+            document.getElementById(frames[i]+'_frame').style.display = "none";
+        }
+      }
+    document.getElementById('topnav').style.display = "none";
+    document.getElementById('sidebar').style.display = "none";
+    }
+</script>
+{% endblock %}

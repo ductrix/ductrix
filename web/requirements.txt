@@ -1,0 +1,8 @@
+sqlalchemy
+uuid
+ConfigParser
+Crypto
+datetime
+rq
+redis
+psycopg2

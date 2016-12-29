@@ -1,0 +1,11 @@
+{% extends "navigation.html" %}
+{% block dash_active %}active{% endblock %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+ 
+    <div class="embed-responsive embed-responsive-16by9" >
+        <div class="spinner spinner-lg"></div>
+      <iframe id="graphs" scrolling="yes" class="embed-responsive-item" id="overview_frame"  src="{{ dashboard }}"</iframe>
+    </div>
+
+{% endblock %}

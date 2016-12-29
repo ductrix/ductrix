@@ -1,0 +1,47 @@
+---
+ - name: reconfigure vm
+   hosts: localhost
+   gather_facts: no
+   vars: 
+     vcenter_host: "{{ lookup('env','ANS_VCENTER') }}"
+     vcenter_login: "{{ lookup('env','ANS_VCUSER') }}"
+     vcenter_password: "{{ lookup('env','ANS_VCPASS') }}"
+
+   tasks:
+
+    - name: reconfigure vm
+      vsphere_guest:
+        vcenter_hostname: "{{ vcenter_host }}"
+        username: "{{ vcenter_login }}"
+        password: "{{ vcenter_password }}"
+        guest: "{{ name }}"
+        validate_certs: False
+        vmware_guest_facts: yes
+      register: vmfacts
+
+    - debug: var=vmfacts
+
+    - name: reconfigure vm
+      vsphere_guest:
+        vcenter_hostname: "{{ vcenter_host }}"
+        username: "{{ vcenter_login }}"
+        password: "{{ vcenter_password }}"
+        guest: "{{ name | default(vmfacts.ansible_facts.hw_name) }}"
+        validate_certs: False
+        state: reconfigured
+        force: yes
+        vm_extra_config:
+          vcpu.hotadd: yes
+          mem.hotadd:  yes
+          notes: "{{ notes | default('Managed by ductrix') }}"
+        vm_disk: "{{ disklist }}"
+        vm_nic: "{{ niclist }}"
+        vm_hardware:
+          num_cpus: "{{ num_cpu | default(vmfacts.ansible_facts.hw_processor_count) }}"
+          memory_mb: "{{ mem_size | default(vmfacts.ansible_facts.hw_memtotal_mb) }}"
+          osid: "{{ osid |  default(vmfacts.ansible_facts.hw_guest_id) }}"
+          scsi: paravirtual
+        esxi:
+          datacenter: "{{ datacenter }}" 
+          cluster: "{{ cluster }}"
+

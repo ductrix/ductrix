@@ -1,0 +1,221 @@
+{% extends "navigation.html" %}
+{% block pool_active %}active{% endblock %}
+{% block title %}Pools{% endblock %}
+{% block content %}
+    {% if message %}
+        {{ message | safe }} 
+    {%  endif %}
+<div id="inputform" class="modal" tabindex="-1" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"  onclick="location.href='/pools';" value="Close">
+        <span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">Create Pool</h4>
+      </div>
+      <div class="modal-body">
+        <form class="form-horizontal" action="createpool" method="POST">
+              <span id="errormsg" style='display: none'> </span>
+          <div class="form-group">
+            <label class="col-sm-4 control-label" for="modalInput">Pool Type</label>
+            <div class="col-sm-8">
+                <select type="text" name="pooltype" id="pooltype" >  
+                  <option selected disabled hidden style='display: none' value=''></option>
+                      <option value="vmware">VMware</option>
+                      <option value="aws" disabled>Amazon AWS</option>
+                      <option value="googlecloud" disabled >Google Cloud</option>
+                      <option value="docker" disabled>Docker</option>
+                </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="col-sm-4 control-label" for="modalInputDisabled">Pool Name</label>
+            <div class="col-sm-8">
+              <input type="text" name="poolname" id="poolname" class="form-control" ></div>
+          </div>
+          <div class="form-group">
+            <label class="col-sm-4 control-label" for="modalInputDisabled">vCenter Address</label>
+            <div class="col-sm-8">
+              <input type="text" name="vcname" id="vcname" class="form-control">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="col-sm-4 control-label" for="modalInputDisabled">Username</label>
+            <div class="col-sm-8">
+              <input type="text" name="vcuser" id="vcuser" class="form-control">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="col-sm-4 control-label" for="modalInputDisabled">Password</label>
+            <div class="col-sm-8">
+              <input type="password" name="vcpass" id="vcpass" class="form-control" onchange="getvcdata('clusters')">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="col-sm-4 control-label" for="modalInput" >Cluster</label>
+            <div class="col-sm-8">
+                <select type="text" name="clustername" id="clustername" onclick="getvcdata('all')">  
+                  <option selected disabled hidden style='display: none' value=''></option>
+                </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="col-sm-4 control-label" for="modalInput">Network</label>
+            <div class="col-sm-8">
+                <select type="text" name="networkname" id="networkname" >
+                  <option selected disabled hidden style='display: none' value=''></option>
+                </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="col-sm-4 control-label" for="modalInput">Datastore</label>
+            <div class="col-sm-8">
+                <select type="text" name="datastorename" id="datastorename" >
+                  <option selected disabled hidden style='display: none' value=''></option>
+                </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="col-sm-4 control-label" for="modalInput">Datacenter</label>
+            <div class="col-sm-8">
+                <!-- <input type="text" name="datastorename" id="datacentername" disabled> -->
+                <span name="datacentername" id="datacentername"></span> 
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal" onclick="location.href='/pools';" value="Close">Close</button>
+            <button type="submit" class="btn btn-primary">Create Pool</button>
+          </div>
+        </form>
+      </div><!-- /.modal-boyd -->
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+{% if pools_list is defined %}
+      <div class="blank-slate-pf-main-action">
+        <button class="btn btn-primary btn-lg" type="button" onclick="showForm('block')"> Create New {{ self.title() }} </button> 
+      </div>
+        <br />
+        <table class="table table-striped table-bordered">
+          <thead>
+            <tr>
+              <th>Pool ID</th>
+              <th>Pool Name</th>
+              <th>Pool Type</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in pools_list %}
+               {{ item | safe}}
+            {% endfor %}
+          </tbody>
+        </table>
+{% else %}
+<div class="blank-slate-pf">
+  <div class="blank-slate-pf-icon">
+    <span class="pficon pficon pficon-add-circle-o"></span>
+  </div>
+  <h1>
+    None 
+  </h1>
+  <p>
+    Please create a new {{ self.title() }} 
+  </p>
+  <p>
+    Learn more about this <a href="#">on the documentation</a>.
+  </p>
+  <div class="blank-slate-pf-main-action">
+    <button class="btn btn-primary btn-lg" type="button" onclick="showForm('block')"> Create New {{ self.title() }} </button> 
+  </div>
+</div>
+
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+    <script>
+    // Initialize Datatables
+        function showForm(action){
+            document.getElementById('inputform').style.display = action;
+        }
+
+    function getvcdata(datarequested){
+        document.getElementById('errormsg').style.display = 'none';
+
+        var vcuser = document.getElementById("vcuser").value;
+        var vcpass = document.getElementById("vcpass").value;
+        var vcname = document.getElementById("vcname").value;
+        var clustername = document.getElementById("clustername").value;
+
+        var cluster = document.getElementById("clustername");
+        var network = document.getElementById("networkname");
+        var datastore = document.getElementById("datastorename");
+
+
+        var opt = document.createElement('option');
+        opt.text = "Loading...";
+        opt.value = "Loading...";
+
+        if ( datarequested == 'clusters' ){
+            cluster.options.length = 0;
+            cluster.appendChild(opt);
+        }else{
+            network.options.length = 0;
+            datastore.options.length = 0;
+            datastore.appendChild(opt);
+            var opt1 = document.createElement('option');
+            opt1.text = "Loading...";
+            opt1.value = "Loading...";
+            network.appendChild(opt1);
+        }
+
+
+        $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+        $.ajax({
+            url: '/getvcdata',
+            data: {'vcuser' : vcuser,'vcpass': vcpass,'vcname': vcname, 'clustername': clustername},
+            type: 'POST',
+            success: function(data) {
+            console.log(data);
+        if ( $.isArray(data)){
+            cluster.options.length = 0;
+             for (i = 0; i < data.length; i++){
+                    var opt = document.createElement('option');
+                    opt.text = data[i];
+                    opt.value = data[i];
+                    cluster.appendChild(opt);
+                }
+            }
+        else if ($.isPlainObject(data)){
+           network.options.length = 0;
+           datastore.options.length = 0;
+             var networks = data["networks"];
+             var datastores = data["datastores"];
+             var datacenter = data["datacenter"];
+             for (i = 0; i < networks.length; i++){
+                    var opt = document.createElement('option');
+                    opt.text = networks[i];
+                    opt.value = networks[i];
+                    network.appendChild(opt);
+                }
+             for (i = 0; i < datastores.length; i++){
+                    var opt = document.createElement('option');
+                    opt.text = datastores[i];
+                    opt.value = datastores[i];
+                    datastore.appendChild(opt);
+                }
+              document.getElementById('datacentername').innerHTML = datacenter;   
+            }
+        else {
+                var errormsg = document.getElementById("errormsg");
+                errormsg.innerHTML = data;
+                document.getElementById('errormsg').style.display = 'block';
+            }
+       },
+            error: function(error) {
+                console.log(error);
+            }
+        });
+    }
+    </script>
+{% endblock %}

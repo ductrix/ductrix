@@ -1,0 +1,137 @@
+{% extends "navigation.html" %}
+{% block tasks_active %}active{% endblock %}
+{% block title %}Tasks{% endblock %}
+{% block content  %}
+{% if task_list is defined %}
+
+<div class="list-group list-view-pf list-view-pf-equalized-column">
+            <div class="list-view-pf-body">
+                          <div class="list-group-item">
+                                <div class="list-view-pf-main-info">
+                                    <div class="list-view-pf-left">
+                                       <span class="pficon pficon-running"></span>
+                                    </div>
+                                    <div class="list-view-pf-additional-info-item">
+                                        <u>Task ID</u>
+                                    </div>
+                                    <div class="list-view-pf-additional-info-item">
+                                        <u>Started</u>
+                                    </div>
+                                    <div class="list-view-pf-additional-info-item">
+                                        <u>Ended</u>
+                                    </div>
+                                    <div class="list-view-pf-additional-info-item">
+                                        <u>Status</u>
+                                    </div>
+                                </div>
+                    </div>
+                </div>
+            {% for item in task_list %}
+              <div class="list-group-item">
+                            <div class="list-view-pf-main-info">
+                              <div class="list-view-pf-left">
+                                {% if item.status == "started" %}
+                                    <div class="spinner spinner-lg"></div>
+                                {% elif  item.status == "failed" %}
+                                    <span class="pficon pficon-error-circle-o list-view-pf-icon-md list-view-pf-icon-danger"></span>
+                                {% elif  item.status == "finished" %}
+                                    <span class="pficon pficon-ok list-view-pf-icon-md list-view-pf-icon-success"></span>
+                                {% else %}
+                                    <span class="pficon pficon-info list-view-pf-icon-md list-view-pf-icon-info"></span>
+                                {% endif %}
+                              </div>
+                              <div class="list-view-pf-additional-info-item">
+                                  {{ item.job_id }} 
+                              </div>
+                              <div class="list-view-pf-additional-info-item">
+                                    {{ item.enqueued_at }}
+                              </div>
+                              <div class="list-view-pf-additional-info-item">
+                                    {{ item.ended_at }}
+                              </div>
+                              <div class="list-view-pf-additional-info-item">
+                                {{ item.status }}
+                              </div>
+                            </div>
+                      </div>
+                    {% endfor %}
+                </div>
+          </div>
+</div>
+
+<!-- 
+<table class="table table-striped table-bordered">
+          <thead>
+            <tr>
+              <th>Task ID</th>
+              <th>Description</th>
+              <th>Status</th>
+              <th>Result</th>
+            </tr>
+          </thead>
+          <tbody>
+#            {% for item in task_list %}
+                <tr>
+               <td>{{ item.job_id | safe}}</td>
+               <td>{{ item.description | safe}}</td>
+               <td>{{ item.status | safe}}</td>
+               <td>{{ item.result | safe}}</td>
+                <td>
+                    {{ item.job_id }}
+                    {{ item.created_at }}
+                    {{ item.origin }}
+                    {{ item.description }}
+                    {{ item.enqueued_at }}
+                    {{ item.ended_at }}
+                    {{ item.result }}
+                    {{ item.exc_info }}
+                    {{ item.timeout }}
+                    {{ item.result_ttl }}
+                    {{ item.status }}
+                    {{ item.dependency_id }}
+                    {{ item.meta }}
+                <td>
+
+                </tr>
+
+#            {% endfor %}
+          </tbody>
+        </table>
+-->        
+
+
+    {% else %}
+        <div class="blank-slate-pf">
+          <div class="blank-slate-pf-icon">
+            <span class="pficon pficon pficon-add-circle-o"></span>
+          </div>
+          <h1>
+            Empty State Title
+          </h1>
+          <p>
+            No current tasks
+          </p>
+          <p>
+            Learn more about this <a href="#">on the documentation</a>.
+          </p>
+          <div class="blank-slate-pf-main-action">
+            <button class="btn btn-primary btn-lg"> Create Server </button>
+          </div>
+          <div class="blank-slate-pf-secondary-action">
+            <button class="btn btn-default"> Create Database </button> <button class="btn btn-default"> Create Pool</button> 
+          </div>
+        </div>
+        {% endif %}
+{% endblock %}
+{% block scripts %}
+<script>
+  // Equalize column width
+  $(document).ready(function () {
+    var widest = 0;
+    $('.list-view-pf-equalized-column .list-view-pf-additional-info-item').each( function() {
+        widest = $(this).width() > widest ? $(this).width() : widest;
+    }).width(widest);
+  });
+</script>
+
+{% endblock %}

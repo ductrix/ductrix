@@ -1,0 +1,261 @@
+---
+ - name: create vsphere instance
+   hosts: localhost
+   gather_facts: no
+   tags: provision_new_host
+   vars: 
+     vcenter_host: "{{ pooltarget }}"
+     vcenter_login: "{{ pooluser }}"
+     poolpass : "{{ lookup('env','ANS_VCPASS') }}"
+     parentfolder : "DUCTRIX"
+     tmp_ip_file: /var/tmp/{{ name }}_tmp_ip.out
+     image: RHEL72 #RHEL 7.2
+    # Task that will be used to Launch/Create an EC2 Instance
+    
+   tasks:
+    - name: Ensure "{{ parentfolder }}" folder exists
+      local_action: 
+        module: vsphere
+        host: "{{ vcenter_host }}"
+        login: "{{ vcenter_login }}"
+        password: "{{ poolpass }}"
+        timeout: 60
+        folder: 
+          name : "{{ parentfolder }}"
+          state: present
+      register: createrootfolder 
+      tags: deploy_vm, all
+
+    - name: Ensure "{{poolname}}" folder exists
+      local_action: 
+        module: vsphere
+        host: "{{ vcenter_host }}"
+        login: "{{ vcenter_login }}"
+        password: "{{ poolpass }}"
+        timeout: 60
+        folder: 
+          name : "{{ poolname }}"
+          parent: "{{ parentfolder }}" 
+          state: present
+      register: createpoolfolder 
+      tags: deploy_vm, all
+
+    - name: Deploy OVF 
+      local_action: 
+        module: vsphere
+        host: "{{ vcenter_host }}"
+        login: "{{ vcenter_login }}"
+        password: "{{ poolpass }}"
+        timeout: 60
+        datacenter: "{{ datacenter }}"
+        folder:
+          parent: "{{ parentfolder }}" 
+          name : "{{ poolname }}"
+        guest:
+          name: "{{ name }}"
+          state: present
+          ovf_file: "{{ ovf_file }}"
+          vmdk_file: "{{ vmdk_file }}"
+          datastore_name: "{{ datastore }}"
+          compute_resource: "{{ cluster }}"
+          disk_type: "thin"
+          folder: "{{ poolname }}"
+        spec:
+      register: deployed 
+      tags: deploy_vm, all
+
+    - name: get vm facts 
+      vsphere_guest:
+        vcenter_hostname: "{{ vcenter_host }}"
+        username: "{{ vcenter_login }}"
+        password: "{{ poolpass }}"
+        guest: "{{ name }}"
+        validate_certs: False
+        vmware_guest_facts: yes
+      register: vmfacts
+      tags: deploy_vm, reconfigure_vm, all
+
+    - name: reconfigure vm
+      vsphere_guest:
+        vcenter_hostname: "{{ vcenter_host }}"
+        username: "{{ vcenter_login }}"
+        password: "{{ poolpass }}"
+        guest: "{{ name | default(vmfacts.ansible_facts.hw_name) }}"
+        validate_certs: False
+        state: reconfigured
+        force: yes
+        vm_extra_config:
+          vcpu.hotadd: yes
+          mem.hotadd:  yes
+          notes: "{{ notes | default('Managed by ductrix') }}"
+#        vm_disk: "{{ disklist }}"
+#        vm_nic: "{{ niclist }}"
+        vm_hardware:
+          num_cpus: "{{ cpucount | default(vmfacts.ansible_facts.hw_processor_count) }}"
+          memory_mb: "{{ memsize | default(vmfacts.ansible_facts.hw_memtotal_mb) }}"
+          osid: "{{ osid |  default(vmfacts.ansible_facts.hw_guest_id) }}"
+          scsi: paravirtual
+        esxi:
+          datacenter: "{{ datacenter }}" 
+          cluster: "{{ cluster }}"
+      register: reconfigure 
+      tags: deploy_vm, reconfigure_vm, all
+
+    - name: Power On
+      local_action:
+        module: vsphere
+        host: "{{ vcenter_host }}"
+        login: "{{ vcenter_login }}"
+        password: "{{ poolpass }}"
+        timeout: 60
+        folder:
+          parent: "{{ parentfolder }}" 
+          name : "{{ poolname }}"
+        guest:
+            name: "{{ name }}"
+            state: running
+      when: deployed.changed or reconfigure.changed
+      register: poweron 
+      tags: deploy_vm, all
+
+    - name: waiting for server to come back
+      local_action: wait_for host= "{{ name }}" state=started delay=10 timeout=50
+      when: deployed.changed or  poweron.changed or reconfigure.changed
+      tags: wait, reconfigure_vm, all
+
+#    - name: add disk to vm
+#      local_action:
+#        module: vsphere
+#        host: "{{ vcenter_host }}"
+#        login: "{{ vcenter_login }}"
+#        password: "{{ poolpass }}"
+#        timeout: 60
+#        add_disk:
+#          disk_type: "{{ disk_type }}"
+#          disk_size: "{{ disk_size }}"
+#
+#        folder:
+#          parent: "{{ parentfolder }}" 
+#          name : "{{ poolname }}"
+#        guest:
+#          name: "{{ name }}"
+#      register: add_disk
+#      tags: add_disk
+
+    - name: copy config script to the server
+      local_action:
+        module: vsphere
+        host: "{{ vcenter_host }}"
+        login: "{{ vcenter_login }}"
+        password: "{{ poolpass }}"
+        timeout: 60
+        folder:
+          parent: "{{ parentfolder }}" 
+          name : "{{ poolname }}"
+        guest_operations_manager: fileManager
+        put_file: "/root/ductrix/newlybuilt.sh"
+        spec:
+          type: InitiateFileTransferToGuest
+          value:
+            vm:
+              ManagedObjectReference:
+                type: VirtualMachine
+                name: "{{ name }}"
+            auth:
+              NamePasswordAuthentication:
+                username: "{{ vmuser }}"
+                password: "{{ vmpasswd }}"
+            guestFilePath: /etc/dbcboot/newlybuilt.sh
+            fileAttributes:
+              GuestPosixFileAttributes: {}
+            overwrite: True
+      register: config_script
+      tags:  config_script,all
+
+    - name: run command on the vm
+      local_action:
+        module: vsphere
+        host: "{{ vcenter_host }}"
+        login: "{{ vcenter_login }}"
+        password: "{{ poolpass }}"
+        timeout: 60
+        folder:
+          parent: "{{ parentfolder }}" 
+          name : "{{ poolname }}"
+        guest_operations_manager: processManager
+        spec:
+          type: StartProgramInGuest
+          value:
+            vm:
+              ManagedObjectReference:
+                type: VirtualMachine
+                name: "{{ name }}"
+            auth:
+              NamePasswordAuthentication:
+                username: "{{ vmuser }}"
+                password: "{{ vmpasswd }}" 
+            spec: 
+               GuestProgramSpec:
+                programPath: "{{ program_to_run }}"
+                arguments: "{{ cmd_to_run }}"
+      register: setup_network
+      tags: run_cmd, all
+
+    - name: waiting for server to setup network
+      local_action: wait_for host= "{{ name }}" state=started delay=2 timeout=10
+      when: setup_network.changed
+      tags: setup_network, all
+
+    - name: get server ip file
+      local_action:
+        module: vsphere
+        host: "{{ vcenter_host }}"
+        login: "{{ vcenter_login }}"
+        password: "{{ poolpass }}"
+        timeout: 60
+        folder:
+          parent: "{{ parentfolder }}" 
+          name : "{{ poolname }}"
+        guest_operations_manager: fileManager
+        get_file: "{{ tmp_ip_file }}"
+        spec:
+          type: InitiateFileTransferFromGuest
+          value:
+            vm:
+              ManagedObjectReference:
+                type: VirtualMachine
+                name: "{{ name }}"
+            auth:
+              NamePasswordAuthentication:
+                username: "{{ vmuser }}"
+                password: "{{ vmpasswd }}"
+            guestFilePath: /var/tmp/interface_ip.out
+      register: get_ip_file
+      tags:  get_ip,all
+
+    - name: get ip address
+      connection: local
+      command: /usr/bin/cat "{{ tmp_ip_file }}"
+      register: server_ip
+      tags: get_ip,all
+
+    - name: Add the newly created instance(s) to the local host group (located inside the directory)
+      local_action: lineinfile 
+                     dest="/etc/ansible/hosts" 
+                     regexp="{{ name }}" insertafter="[vm_servers]" line="{{ name }} ansible_host={{ server_ip.stdout }}"
+      when: server_ip.changed,all
+      tags: get_ip,all
+
+    - name: Check DNS For the hostanme 
+      command: getent hosts "{{ name }}"
+      register: ns
+      failed_when: ns.rc != 2
+      ignore_errors: yes
+      tags: set_hosts, all
+
+    - name: Add new vm to /etc/hosts on local server
+      local_action: lineinfile 
+                     dest="/etc/hosts" 
+                     regexp="{{ name }}" line="{{server_ip.stdout}}  {{ name }}"
+      when: ns.rc == 2
+      tags: set_hosts, ,all

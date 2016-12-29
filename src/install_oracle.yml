@@ -1,0 +1,15 @@
+- name: Host Prep and Configraution changes 
+  gather_facts: true
+  hosts: "{{ servername }}"
+  user: root
+  roles:
+  - role: common
+    tags: install-oracle
+  - role: orahost
+    tags: install-oracle
+  - role: oraswdb-install
+    become: oracle
+    tags: install-oracle-binary
+  - role: oradb-create
+    become: oracle
+    tags: install-oracle-binary

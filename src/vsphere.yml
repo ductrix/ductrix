@@ -1,0 +1,164 @@
+---
+ - name: create vsphere instance
+   hosts: localhost
+   gather_facts: no
+   tags: provision_new_host
+   vars: 
+    name:
+    vcenter_host: 192.168.1.160 
+    vcenter_login: vsphere.local\administrator
+    vcenter_password: Ram1sita!
+    folder: TestDB
+    tmp_ip_file: /var/tmp/{{ name }}_tmp_ip.out
+    image: RHEL72 #RHEL 7.2
+    # Task that will be used to Launch/Create an EC2 Instance
+   tasks:
+#    - name: Clone VM
+#      local_action: 
+#        module: vsphere
+#        host: "{{ vcenter_host }}"
+#        login: "{{ vcenter_login }}"
+#        password: "{{ vcenter_password }}"
+#        timeout: 60
+#        guest:
+#          name: "{{ name }}"
+#          state: present
+#          folder: "{{ folder }}"
+#          clone_from: "{{ image }}"
+#        spec:
+#          type: VirtualMachineCloneSpec
+#          value:
+#            config:
+#              VirtualMachineConfigSpec:
+#                name: "{{ name }}"
+#                memoryMB: "{{ memsize }}"
+#                numCPUs: "{{ cpu }}"
+#                deviceChange: []
+#            location:
+#              VirtualMachineRelocateSpec:
+#                pool:
+#                  ManagedObjectReference:
+#                    type: ResourcePool
+#                    name: Resources
+#            powerOn: True
+#            template: False
+#      register: cloned
+#      tags: clone_vm, all
+
+    - name: Deploy OVF 
+      local_action: 
+        module: vsphere
+        host: "{{ vcenter_host }}"
+        login: "{{ vcenter_login }}"
+        password: "{{ vcenter_password }}"
+        timeout: 60
+        guest:
+          name: "{{ name }}"
+          state: present
+          folder: "{{ folder }}"
+          ovf_file: "{{ ovf_file }}"
+          vmdk_file: "{{ vmdk_file }}"
+          disk_type: "thin"
+        spec:
+          type: VirtualMachineCloneSpec
+          value:
+            config:
+              VirtualMachineConfigSpec:
+                name: "{{ name }}"
+                memoryMB: "{{ memsize }}"
+                numCPUs: "{{ cpu }}"
+                deviceChange: []
+            location:
+              VirtualMachineRelocateSpec:
+                pool:
+                  ManagedObjectReference:
+                    type: ResourcePool
+                    name: Resources
+            powerOn: True
+            template: False
+      register: cloned
+      tags: clone_vm, all
+
+    - name: waiting for server to come back
+      local_action: wait_for host= "{{ name }}" state=started delay=10 timeout=50
+      when: cloned.changed
+      tags: wait, all
+
+    - name: run command on the vm
+      local_action:
+        module: vsphere
+        host: "{{ vcenter_host }}"
+        login: "{{ vcenter_login }}"
+        password: "{{ vcenter_password }}"
+        timeout: 60
+        guest_operations_manager: processManager
+        spec:
+          type: StartProgramInGuest
+          value:
+            vm:
+              ManagedObjectReference:
+                type: VirtualMachine
+                name: "{{ name }}"
+            auth:
+              NamePasswordAuthentication:
+                username: "{{ vmuser }}"
+                password: "{{ vmpasswd }}" 
+            spec: 
+               GuestProgramSpec:
+                programPath: "{{ program_to_run }}"
+                arguments: "{{ cmd_to_run }}"
+      register: setup_network
+      tags: run_cmd, all
+
+    - name: Power On
+      local_action:
+        module: vsphere
+        host: "{{ vcenter_host }}"
+        login: "{{ vcenter_login }}"
+        password: "{{ vcenter_password }}"
+        timeout: 60
+        guest:
+            name: "{{ name }}"
+            state: running
+
+    - name: waiting for server to setup network
+      local_action: wait_for host= "{{ name }}" state=started delay=2 timeout=10
+      when: setup_network.changed
+      tags: setup_network, all
+
+    - name: get server ip file
+      local_action:
+        module: vsphere
+        host: "{{ vcenter_host }}"
+        login: "{{ vcenter_login }}"
+        password: "{{ vcenter_password }}"
+        timeout: 60
+        guest_operations_manager: fileManager
+        get_file: "{{ tmp_ip_file }}"
+        spec:
+          type: InitiateFileTransferFromGuest
+          value:
+            vm:
+              ManagedObjectReference:
+                type: VirtualMachine
+                name: "{{ name }}"
+            auth:
+              NamePasswordAuthentication:
+                username: "{{ vmuser }}"
+                password: "{{ vmpasswd }}"
+            guestFilePath: /var/tmp/interface_ip.out
+      register: get_ip_file
+      tags:  get_ip,all
+
+    - name: get ip address
+      connection: local
+      command: /usr/bin/cat "{{ tmp_ip_file }}"
+      register: server_ip
+      tags: get_ip,all
+
+    - name: Add the newly created instance(s) to the local host group (located inside the directory)
+      local_action: lineinfile 
+                     dest="/etc/ansible/hosts" 
+                     regexp="{{ name }}" insertafter="[vm_servers]" line="{{ name }} ansible_host={{ server_ip.stdout }}"
+      when: server_ip.changed,all
+      tags: get_ip,all

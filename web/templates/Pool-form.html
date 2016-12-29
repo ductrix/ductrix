@@ -1,0 +1,69 @@
+<div id="inputform" class="modal" tabindex="-1" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close" >
+        <span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">Create Pool</h4>
+      </div>
+      <div class="modal-body">
+        <form class="form-horizontal" action="createpool" method="POST">
+          <div class="form-group">
+            <label class="col-sm-4 control-label" for="modalInput">Pool Type</label>
+            <div class="col-sm-8">
+                <select type="text" name="pool_type" id="pool_type" onchange=showinput()>  
+                  <option selected disabled hidden style='display: none' value=''></option>
+                    {% if pool_list is defined %}
+                        {% for item in pool_list %}
+                            <option  value="{{item}}">{{item}}</option>
+                        {% endfor %}
+                   {% else %}
+                      <option value="vmware">VMware</option>
+                      <option value="aws">Amazon AWS</option>
+                      <option value="googlecloud">Google Cloud</option>
+                      <option value="docker">Docker</option>
+                   {% endif %}
+                </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="col-sm-4 control-label" for="modalInputDisabled">Pool Name</label>
+            <div class="col-sm-8">
+              <input type="text" name="pool_name" id="pool_name" class="form-control" ></div>
+          </div>
+          <div class="form-group">
+            <label class="col-sm-4 control-label" for="modalInputDisabled">vCenter Address</label>
+            <div class="col-sm-8">
+              <input type="text" name="vc_address" id="vc_address" class="form-control">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="col-sm-4 control-label" for="modalInputDisabled">Username</label>
+            <div class="col-sm-8">
+              <input type="text" name="vc_user" id="vc_user" class="form-control">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="col-sm-4 control-label" for="modalInputDisabled">Password</label>
+            <div class="col-sm-8">
+              <input type="password" name="vc_pass" id="vc_pass" class="form-control">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="col-sm-4 control-label" for="modalInput">Cluster</label>
+            <div class="col-sm-8">
+                <select type="text" name="cluster_nm" id="cluster_nm" onchange=showinput()>  
+                  <option selected disabled hidden style='display: none' value=''></option>
+                  <option value="DBCluster1">DBCluster1</option>
+                </select>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal" onclick="showForm('none')">Close</button>
+            <button type="submit" class="btn btn-primary">Create Pool</button>
+          </div>
+        </form>
+      </div><!-- /.modal-boyd -->
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->

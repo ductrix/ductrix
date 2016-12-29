@@ -1,0 +1,14 @@
+- become: true
+  gather_facts: true
+  hosts: null
+  name: add mysql database
+  remote_user: ec2-user
+  roles:
+  - role: role-aws-host-prep
+  - role: role-repo-epel
+  - name="test123": null
+    role: role-mysql
+  - role: postgresql
+  tasks:
+  - postgresql_db: name=kpostgres3
+    tags: kpostgres3

@@ -1,0 +1,16 @@
+{% extends "navigation.html" %}
+
+{% block db_active %}active{% endblock %}
+{% block title %}{{dbname}}{% endblock %}
+{% block content %}
+    {% if message %}
+        {{ message | safe }} 
+    {%  endif %}
+
+    <div class="embed-responsive embed-responsive-16by9" >
+        <div class="spinner spinner-lg"></div>
+      <iframe id="graphs" scrolling="yes" class="embed-responsive-item" id="overview_frame"  src="{{ dbconn }}"</iframe>
+    </div>
+
+
+{% endblock%}

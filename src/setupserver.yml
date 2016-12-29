@@ -1,0 +1,103 @@
+- name: setup host 
+  gather_facts: true
+  hosts: "{{servername}}"
+  vars: 
+    dbpasswd: "{{ lookup('env','DBPASSWD') }}"
+  tasks:
+  - mysql_db: name="{{dbname}}" 
+    tags: create-mysql
+
+  - mysql_user: name="{{dbuser}}" password="{{dbpasswd}}"
+    tags: create-mysql
+
+
+  - name : add "{{dbname}}" for stats collection 
+    lineinfile:
+     dest: /etc/collectd.d/mysql.conf
+     state: present
+     insertafter: "<Plugin mysql>"
+     line: "<Database {{dbname}}>\n
+            \tHost 'localhost'\n
+            \tUser 'root'\n
+            \tPassword 'mysql1'\n
+            \tDatabase {{dbname}}\n
+        </Database>"
+    notify: restart collectd
+    tags: create-mysql
+  #- postgresql_db: name="{{dbname}}" login_user="{{dbuser}}" login_password="{{dbpasswd}}"
+  - postgresql_db: name="{{dbname}}"
+    tags: create-postgres
+
+  - name : add "{{dbname}}" for stats collection 
+    lineinfile:
+     dest: /etc/collectd.d/postgresql.conf
+     state: present
+     insertafter: "<Plugin postgresql>"
+     line: "<Database {{dbname}}>\n
+            \tHost 'localhost'\n
+            \tUser 'postgres'\n
+            \tQuery custom_deadlocks\n
+            \tQuery backends\n
+            \tQuery transactions\n
+            \tQuery queries\n
+            \tQuery queries_by_table\n
+            \tQuery query_plans\n
+            \tQuery table_states\n
+            \tQuery query_plans_by_table\n
+            \tQuery table_states_by_table\n
+            \tQuery disk_io\n
+            \tQuery disk_io_by_table\n
+            \tQuery disk_usage\n
+        </Database>"
+    notify: restart collectd
+    tags: create-postgres
+
+  pre_tasks:
+
+  - name: add disk to vm
+    local_action:
+      module: vsphere
+      host: "{{ pooltarget }}"
+      login: "{{ pooluser }}"
+      password: "{{ poolpass }}"
+      timeout: 60
+      add_disk:
+        disk_type: "{{ disk_type }}"
+        disk_size: "{{ disk_size }}"
+      folder:
+        parent: "{{ parentfolder | default('DUCTRIX') }}" 
+        name : "{{ poolname }}"
+      guest:
+        name: "{{ servername }}"
+    register: add_disk, create_oracle, oracle_role
+    tags: add_disk, oracle_role
+
+  - name: filesystem | find the newly added disk
+    script: /root/ductrix/main/role-oracle/orahost/files/disks.sh 
+    when: configure_host_disks
+    register: disk_name
+    tags: add_disk, oracle_role
+
+  roles:
+  - role: oradb-create 
+    become: oracle
+    tags: create-oracle
+  - role: role-server-prep
+    tags: server-prep,default
+  - role: role-aws-host-prep
+    tags: setup-aws-host,default
+  - role: role-collectd
+    tags: setup-collectd,default
+  - role: role-mysql
+    tags: mysql_role
+  - role: role-postgresql
+    tags: postgres_role
+  - role: common
+    tags: oracle_role
+  - role: orahost
+    tags: oracle_role
+  - role: cxoracle
+    tags: install_cxoracle
+  - role: oraswdb-install
+    become: oracle
+    tags: oracle_role,install-oracle-binary

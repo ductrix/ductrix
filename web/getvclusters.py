@@ -5,6 +5,7 @@ import os
 import time
 import logging
 import requests
+import ssl 
 from pyVmomi import vim, vmodl
 from pyVim.connect import SmartConnect, Disconnect
 requests.packages.urllib3.disable_warnings()
@@ -17,10 +18,14 @@ def getcontent(name, user, passwd, resource, vcenter=None, uuid=None):
     Get the vsphere object associated with a given text name
    ''' 
    if vcenter:
+      s = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
+      s.verify_mode = ssl.CERT_NONE
       try:
          si = SmartConnect(host=vcenter, user=user, pwd=passwd)
-      except IOError, e:
-         return ("Unable to connect to vsphere server. Error message: %s" % e), ""
+      except IOError as e:
+         si = SmartConnect(host=vcenter, user=user, pwd=passwd, sslContext=s)
+      except:
+         return ("Unable to connect to vsphere server. Error message:", sys.exc_info()[0])
       content = si.RetrieveContent()
       atexit.register(Disconnect, si)
       

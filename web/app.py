@@ -426,13 +426,18 @@ def create_pool():
         #passwd = encryption_suite.encrypt(passwd)
         hashpass = base64.b64encode(passwd)
 
+	from ansible_vault import Vault
+	vault = Vault(passwd)
+	vault_content = vault.dump({'poolpass' : str(vcpass)})
+        hashcontent = base64.b64encode(vault_content)
+
         try:
             sys.path.append(ductrix_root)
-            import ductrix
-            ductrix.create_vcpassfile(passwd, "{0}".format(vcpass), poolname)
+            #import ductrix
+            #ductrix.create_vcpassfile(passwd, "{0}".format(vcpass), poolname)
             dbsession.add(pooltable( poolname=poolname, pooltype=pooltype, poolid=poolid))
-            dbsession.add(privatepool(username=vcuser,password=hashpass, targetserver=vcname, clusternm=clustername, \
-                poolid=poolid, networknm=networkname, storagenm=datastorename, datacenternm=datacentername))
+            dbsession.add(privatepool(username=vcuser,password=hashpass, content=hashcontent targetserver=vcname, \ 
+		clusternm=clustername, poolid=poolid, networknm=networkname, storagenm=datastorename, datacenternm=datacentername))
             dbsession.commit()
             dbsession.close()
 
@@ -518,6 +523,7 @@ def create_servers():
     import base64
     ## Encryption
     args['vault_pass'] = base64.b64decode(passwd)
+    args['vault_content'] = base64.b64decode(content)
 
     job = q.enqueue_call(func=server_create, args=(servername, poolid, args, tags), result_ttl=5000, timeout=10000)
     jid = job.get_id()

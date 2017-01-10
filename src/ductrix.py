@@ -146,7 +146,8 @@ def deploy_server( args, tags=None):
         dir_path = os.path.dirname(os.path.realpath(__file__))
         from ansible_vault import Vault
         vault = Vault(args.vault_pass)
-        data = vault.load(open('{0}/pools/{1}.yml'.format(dir_path, args.poolname)).read())
+        data = vault.load(args.vault_content)
+        #data = vault.load(open('{0}/pools/{1}.yml'.format(dir_path, args.poolname)).read())
             
         # This is passed to the newlybuilt.sh which splits based on ','
         # then appends all the line to the network-scripts file for ethernet
@@ -198,12 +199,14 @@ def setup_roles( args, tags=None):
 #        args = dotdict(args) 
 
     vpass = args.get('vault_pass',None)
+    vault_content = args.get('vault_content',None)
     if vpass:
         from ansible_vault import Vault
-        vault = Vault(args.get('vault_pass',None))
-        dir_path = os.path.dirname(os.path.realpath(__file__))
-        data = vault.load(open('{0}/pools/{1}.yml'.format(dir_path, args['poolname'])).read())
-        args['poolpass'] = data['poolpass']
+        vault = Vault(vpass)
+        data = vault.load(vault_content)
+        #dir_path = os.path.dirname(os.path.realpath(__file__))
+        #data = vault.load(open('{0}/pools/{1}.yml'.format(dir_path, args['poolname'])).read())
+        #args['poolpass'] = data['poolpass']
 
    # if args.dbname:
    #     run_data = { 'servername': args.servername , 'dbname': args.dbname, 'db }
@@ -214,19 +217,19 @@ def setup_roles( args, tags=None):
     runplay ('setupserver.yml', args['servername'],  args=args, tags=tags)
     #runplay ('/var/hfiles/setupserver.yml', args['servername'],  args=args, tags=tags)
 
-def create_vaultfile( fileloc, passwd, content):
-    try:
-        from ansible_vault import Vault
-        vault = Vault(passwd)
-        vault.dump(content, open(fileloc, 'w'))
-        return 
-    except Exception as inst: 
-        raise Exception("Error occured while creating vault file {0} ".format(str(inst)))
-
-def create_vcpassfile(passwd, vcpass, poolname):
-    x = {'poolpass' : str(vcpass)}
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    create_vaultfile('{0}/pools/{1}.yml'.format(dir_path, poolname), passwd, x)
+#def create_vaultfile( fileloc, passwd, content):
+#    try:
+#        from ansible_vault import Vault
+#        vault = Vault(passwd)
+#        vault.dump(content, open(fileloc, 'w'))
+#        return 
+#    except Exception as inst: 
+#        raise Exception("Error occured while creating vault file {0} ".format(str(inst)))
+#
+#def create_vcpassfile(passwd, vcpass, poolname):
+#    x = {'poolpass' : str(vcpass)}
+#    dir_path = os.path.dirname(os.path.realpath(__file__))
+#    create_vaultfile('{0}/pools/{1}.yml'.format(dir_path, poolname), passwd, x)
 
 if __name__ == "__main__":
 

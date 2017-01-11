@@ -436,7 +436,7 @@ def create_pool():
             #import ductrix
             #ductrix.create_vcpassfile(passwd, "{0}".format(vcpass), poolname)
             dbsession.add(pooltable( poolname=poolname, pooltype=pooltype, poolid=poolid))
-            dbsession.add(privatepool(username=vcuser,password=hashpass, content=hashcontent, targetserver=vcname, \ 
+            dbsession.add(privatepool(username=vcuser,password=hashpass, content=hashcontent, targetserver=vcname, 
 		clusternm=clustername, poolid=poolid, networknm=networkname, storagenm=datastorename, datacenternm=datacentername))
             dbsession.commit()
             dbsession.close()

@@ -382,11 +382,13 @@ def create_database():
         #args['datastore'] = result.storagenm
         args['datacenter'] = result.datacenternm
         passwd = result.password
-
+        content = result.content
+        
     # Decryption
     import base64
     ## Encryption
     args['vault_pass'] = base64.b64decode(passwd)
+    args['vault_content'] = base64.b64decode(content)
 
     job = q.enqueue_call(func=database_create, args=(args, tags), result_ttl=5000, timeout=10000)
     jid = job.get_id()
@@ -429,7 +431,7 @@ def create_pool():
 	from ansible_vault import Vault
 	vault = Vault(passwd)
 	vault_content = vault.dump({'poolpass' : str(vcpass)})
-        hashcontent = base64.b64encode(vault_content)
+    hashcontent = base64.b64encode(vault_content)
 
         try:
             sys.path.append(ductrix_root)
@@ -518,6 +520,7 @@ def create_servers():
         args['datacenter'] = result.datacenternm
         #args['vault_pass'] = result.password
         passwd = result.password
+        content = result.content
 
     # Decryption
     import base64

@@ -431,7 +431,7 @@ def create_pool():
 	from ansible_vault import Vault
 	vault = Vault(passwd)
 	vault_content = vault.dump({'poolpass' : str(vcpass)})
-    hashcontent = base64.b64encode(vault_content)
+        hashcontent = base64.b64encode(vault_content)
 
         try:
             sys.path.append(ductrix_root)

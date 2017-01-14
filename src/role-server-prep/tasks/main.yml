@@ -1,0 +1,5 @@
+---
+# tasks file for role-server-prep
+- include: repos.yml 
+- include: packages.yml
+- include: hostname.yml 

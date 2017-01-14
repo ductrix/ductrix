@@ -1,0 +1,90 @@
+---
+cluster_name: testcluster
+dse_version: '4.8'
+dserepouser: 'user'
+dserepopass: 'pass'
+dsehost: 'rpm.datastax.com'
+opscenter_dc: 'opscenter'
+opscenter_auth: true
+admin_password: 'admin'
+
+# set to true to show host variables
+debug: false
+
+cloud_config:
+  domain: 'localnet'
+  allowed_external_ips: ['127.0.0.1']
+  ssh:
+    keyname: 'dse-ssh-key'
+    keyfile: '~/.ssh/id_rsa.pub'
+
+topology:
+  - dc_name: DC1
+    options:
+      workloads:
+        - cassandra
+      tokens: 256
+      group: 'dse-c-iad'
+      data_disks_devices: ['xvde']
+      cassandra_base_path: "/var/lib/cassandra"
+      listen_interface: 'eth1'
+      broadcast_interface: 'eth0'
+      rpc_interface: 'eth1'
+      cloud:
+        region: 'IAD'
+        nodes_count: 3
+        image: 'CentOS 7 (PVHVM)'
+        flavor: 'general1-8'
+      cbs:
+        build_cbs: true
+        disks_size: 100
+        disks_type: 'SSD'
+
+  - dc_name: DC2
+    options:
+      workloads:
+        - search
+        - spark
+      tokens: 64
+      group: 'dse-sa-dfw'
+      data_disks_devices: []
+      cassandra_base_path: "/var/lib/cassandra"
+      listen_interface: 'eth1'
+      broadcast_interface: 'eth0'
+      rpc_interface: 'eth0'
+      cloud:
+        region: 'DFW'
+        nodes_count: 0
+        image: 'CentOS 7 (PVHVM)'
+        flavor: 'general1-8'
+      cbs:
+        build_cbs: false
+        disks_size: 100
+        disks_type: 'SSD'
+
+  - dc_name: DC3
+    options:
+      workloads:
+        - cassandra
+        - analytics
+      tokens: 64
+      group: 'dse-c-static'
+      data_disks_devices: ['sdb']
+      cassandra_base_path: "/var/lib/cassandra"
+      listen_interface: 'bond0'
+      broadcast_interface: 'bond0'
+      rpc_interface: 'bond0'
+
+  - dc_name: opscenter
+    options:
+      group: 'opscenter-node'
+      data_disks_devices: []
+      cassandra_base_path: "/var/lib/cassandra"
+      listen_interface: 'eth1'
+      broadcast_interface: 'eth0'
+      rpc_interface: 'eth1'
+      cloud:
+        region: 'IAD'
+        nodes_count: 1
+        image: 'CentOS 7 (PVHVM)'
+        flavor: 'general1-2'

@@ -1,0 +1,63 @@
+---
+# Copyright (c) 2014 Lekane Oy. All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+#    * Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#    * Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following disclaimer
+# in the documentation and/or other materials provided with the
+# distribution.
+#    * Neither the name of Lekane Oy nor the names of its
+# contributors may be used to endorse or promote products derived from
+# this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+- name: Checkout tablesnap
+  git: repo=http://github.com/JeremyGrosser/tablesnap.git dest=/usr/local/bin/tablesnap_github force=yes version="{{ tablesnap_version }}"
+
+- name: Change tablesnap retry count
+  shell: "sed -i 's/default_retries = 1/default_retries = 5/' /usr/local/bin/tablesnap_github/tablesnap"
+
+- name: Install tablesnap
+  shell: "python setup.py install"
+  args:
+      chdir: /usr/local/bin/tablesnap_github
+
+- name: Template boto.cfg for RiakCS
+  template: src=boto.j2 dest=/etc/boto.cfg
+  when: "s3_backup_environment == 'riakcs'"
+
+- name: Symlink /usr/local/bin/tablesnap to /usr/bin/tablesnap
+  file: src=/usr/local/bin/tablesnap dest=/usr/bin/tablesnap state=link
+
+- name: Copy tablesnap init script
+  shell: "cp /usr/local/bin/tablesnap_github/debian/tablesnap.init /etc/init.d/tablesnap"
+
+- name: Modify tablesnap init script permissions
+  file: path=/etc/init.d/tablesnap mode=0775
+
+- name: Template /etc/default/tablesnap
+  template: src=tablesnap_default.j2 dest=/etc/default/tablesnap
+
+- name: Enable tablesnap service (backups enabled)
+  service: name=tablesnap state=restarted enabled=yes
+  when: "{{ s3_backup_enabled | default(false) }} == true"
+
+- name: Disable tablesnap service (backups disabled)
+  service: name=tablesnap state=stopped enabled=no
+  when: "{{ s3_backup_enabled | default(false) }} == false"

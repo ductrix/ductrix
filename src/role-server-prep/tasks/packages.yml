@@ -1,0 +1,9 @@
+---
+  - name: install packages
+    yum: "name={{ item }} state=installed"
+    register: result
+    until: '"failed" not in result'
+    retries: 2
+    delay: 10
+    with_items:
+    - "sg3_utils"

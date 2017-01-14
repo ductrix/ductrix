@@ -1,0 +1,22 @@
+---
+- name: "Add nodes to required groups"
+  hosts: localhost
+  connection: local
+  gather_facts: False
+  tasks:
+    - name: "Add nodes to required groups"
+      include: add_nodes.yml
+      when: ((outer_loop is defined and outer_loop.options.group) or item.options.group) and ((outer_loop is defined and groups[outer_loop.options.group]|length > 0) or groups[item.options.group]|length > 0)
+      with_items:
+        - "{{ topology }}"
+
+- name: "Apply the common role to all nodes"
+  hosts: dse-cluster, opscenter-group
+  any_errors_fatal: true
+  become: yes
+  pre_tasks:
+    - name: "Show debug info"
+      debug: var=hostvars[inventory_hostname]
+      when: debug
+  roles:
+    - common

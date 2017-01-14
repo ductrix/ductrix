@@ -1,0 +1,19 @@
+# Config file for Collectd plugin network. This specifies whether this host
+# behaves like a server or a client
+
+LoadPlugin postgresql
+<Plugin postgresql>
+  <Query custom_deadlocks>
+      Statement "SELECT deadlocks as num_deadlocks \
+          FROM pg_stat_database \
+          WHERE datname = $1;"
+
+      Param database
+
+      <Result>
+          Type "pg_xact"
+          InstancePrefix "num_deadlocks"
+          ValuesFrom "num_deadlocks"
+      </Result>
+  </Query>
+</Plugin>

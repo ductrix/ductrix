@@ -1,0 +1,31 @@
+- name: Install DSE packages (yum)
+  yum:
+    name: "{{ item }}"
+    update_cache: yes
+    state: installed
+  with_items:
+    - dse-full-{{ dse_version }}*
+  notify: reload systemd
+  when: ansible_os_family == "RedHat"
+
+- name: Install DSE packages (apt)
+  apt:
+    name: "{{ item }}"
+    update_cache: yes
+    state: installed
+  with_items:
+    - dse-full={{ dse_version }}*
+  when: ansible_os_family == "Debian"
+
+- meta: flush_handlers
+
+- include: config.yml
+  tags:
+    - configuration
+
+- meta: flush_handlers
+
+- name: Make sure DSE is running
+  service: name=dse state=started enabled=yes
+  tags:
+    - services

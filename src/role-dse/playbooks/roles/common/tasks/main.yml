@@ -1,0 +1,117 @@
+---
+- name: Load OS specific variables
+  include_vars: "{{ item }}"
+  with_first_found:
+    - files:
+        - "{{ ansible_os_family|lower }}.yml"
+        - "{{ ansible_os_family|lower }}-{{ansible_distribution_major_version }}.yml"
+        - defaults.yml
+      paths:
+        - ../vars
+
+- name: Install epel
+  yum: name="https://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-5.noarch.rpm" state=present update_cache=yes
+  when: ansible_os_family == "RedHat"
+
+- name: Ensure required packages are installed (yum)
+  yum:
+    name: "{{ item }}"
+    update_cache: yes
+    state: installed
+  with_items: "{{ packages }}"
+  when: ansible_os_family == "RedHat" and "{{ packages|length > 0 }}"
+
+- name: Ensure required packages are installed (apt)
+  apt:
+    name: "{{ item }}"
+    update_cache: yes
+    state: installed
+  with_items: "{{ packages }}"
+  when: ansible_os_family == "Debian" and "{{ packages|length > 0 }}"
+
+- name: Upgrade all packages (yum)
+  yum: name=* state=latest
+  when: ansible_os_family == "RedHat" and "{{ packages|length > 0 }}"
+
+- name: Upgrade all packages (apt)
+  apt: upgrade=dist
+  when: ansible_os_family == "Debian" and "{{ packages|length > 0 }}"
+
+- name: Set swappiness to 1
+  sysctl: name=vm.swappiness value=0 state=present
+  tags:
+    - configuration
+
+- name: Make sure the NTP service is stopped
+  service: name={{ ntp_service }} state=stopped
+
+- name: Force NTP sync
+  command: "{{ ntp_sync }}"
+
+- name: Start the NTP service
+  service: name={{ ntp_service }} state=started enabled=yes
+  tags:
+    - services
+
+- name: Set nofile limits
+  lineinfile: dest=/etc/security/limits.conf
+              insertbefore="^# End of file"
+              state=present
+              line="{{ item }}"
+  with_items:
+    - "* soft nofile 32768"
+    - "* hard nofile 32768"
+
+- name: Set nproc limits
+  lineinfile: dest=/etc/security/limits.d/90-nproc.conf
+              insertafter=EOF
+              state=present
+              create=yes
+              line="{{ item }}"
+              mode=0644
+  with_items:
+    - "* soft nproc 32768"
+    - "* hard nproc 32768"
+
+- name: Set the tuned profile
+  copy: src=tuned.conf
+        dest=/etc/tuned/cassandra/
+        mode=0755
+  when: ansible_os_family == "RedHat" and ansible_distribution_major_version == "7"
+
+- name: Activate the tuned profile
+  shell: tuned-adm profile cassandra
+  when: ansible_os_family == "RedHat" and ansible_distribution_major_version == "7"
+
+- name: Disable Transparent Huge Pages in Grub 2
+  lineinfile: dest=/etc/default/grub
+              state=present
+              line='GRUB_CMDLINE_LINUX=$GRUB_CMDLINE_LINUX" transparent_hugepage=never"'
+  when: "{{ ansible_distribution_major_version|int }} > 6"
+  notify: update-grub
+
+- meta: flush_handlers
+
+- name: Disable Transparent Huge Pages until reboot
+  shell: echo never > /sys/kernel/mm/transparent_hugepage/enabled && echo never > /sys/kernel/mm/transparent_hugepage/defrag
+  ignore_errors: true
+
+- name: Setup hosts file
+  template: src=hosts.j2 dest=/etc/hosts mode=0644
+
+- include: firewall.yml
+  when: options.cloud is defined and options.cloud
+  tags:
+    - firewall
+
+- include: partitioning.yml
+  when: options.data_disks_devices is defined and options.data_disks_devices and options.cassandra_base_path is defined and options.cassandra_base_path
+
+- name: Upload Datastax Repo
+  template: src={{ datastax_repo }} dest={{ datastax_repo_file }} mode=0644
+  tags:
+    - packages
+
+- name: Add apt key
+  apt_key: url=https://debian.datastax.com/debian/repo_key state=present
+  when: ansible_os_family == "Debian"

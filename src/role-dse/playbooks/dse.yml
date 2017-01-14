@@ -1,0 +1,57 @@
+---
+- name: "Add nodes to required groups"
+  hosts: localhost
+  connection: local
+  gather_facts: False
+  tasks:
+    - name: "Add nodes to required groups"
+      include: add_nodes.yml
+      when: ((outer_loop is defined and outer_loop.options.group) or item.options.group) and ((outer_loop is defined and groups[outer_loop.options.group]|length > 0) or groups[item.options.group]|length > 0)
+      with_items:
+        - "{{ topology }}"
+
+- name: "Gather facts"
+  hosts: dse-cluster
+  any_errors_fatal: true
+  become: yes
+
+- name: "Apply the dse role to all cluster nodes"
+  hosts: dse-cluster
+  any_errors_fatal: true
+  become: yes
+  serial: 1
+  gather_facts: no
+  pre_tasks:
+    - name: "Show debug info"
+      debug: var=hostvars[inventory_hostname]
+      when: debug
+  roles:
+    - role: dse
+      dse_config:
+        data_file_directories:
+          - "{{ cassandra_base_path | default('/var/lib/cassandra') }}/data"
+        commitlog_directory: "{{ cassandra_base_path | default('/var/lib/cassandra') }}/commitlog"
+        saved_caches_directory: "{{ cassandra_base_path | default('/var/lib/cassandra') }}/saved_caches"
+
+- name: "Apply the opscenter role to the opscenter-group group"
+  hosts: opscenter-group
+  any_errors_fatal: true
+  become: yes
+  pre_tasks:
+    - name: "Show debug info"
+      debug: var=hostvars[inventory_hostname]
+      when: debug
+  roles:
+    - role: opscenter
+      opscenter_config:
+        default_api_timeout: 60
+        add_cluster_timeout: 120
+  tags:
+    - opscenter
+
+- name: "Apply the datastax-agent role to all cluster nodes"
+  hosts: dse-cluster
+  any_errors_fatal: true
+  become: yes
+  roles:
+    - datastax-agent

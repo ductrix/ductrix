@@ -1,0 +1,7 @@
+---
+ - name: Oracle Database server installation & Database Creation
+   hosts: "{{ name }}"
+   user: root
+   sudo_user: oracle
+   roles: 
+    - oradb-create

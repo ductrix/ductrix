@@ -1,0 +1,108 @@
+---
+- name: Install OpsCenter (yum)
+  yum:
+    name: "{{ item }}"
+    update_cache: yes
+    state: installed
+  with_items:
+    - opscenter
+  when: ansible_os_family == "RedHat"
+  notify: reload systemd
+
+- name: Install OpsCenter (apt)
+  apt:
+    name: "{{ item }}"
+    update_cache: yes
+    state: installed
+  with_items:
+    - opscenter
+  when: ansible_os_family == "Debian"
+
+- meta: flush_handlers
+
+- name: Update OpsCenter configuration
+  template: src=opscenterd.conf.j2 dest=/etc/opscenter/opscenterd.conf
+  notify: restart opscenter
+
+- meta: flush_handlers
+
+- name: Make sure OpsCenter is running
+  service: name=opscenterd state=started enabled=yes
+  tags:
+    - services
+
+- name: Upload the config for {{ cluster_name }}
+  template: src=cluster_def.j2 dest=/tmp/cluster_def mode=0644
+  tags:
+    - cluster_create
+
+- name: Slurp the config for {{ cluster_name }}
+  slurp: src=/tmp/cluster_def
+  register: cluster_def_b64
+  tags:
+    - cluster_create
+
+- set_fact: cluster_def="{{ cluster_def_b64.content|b64decode }}"
+
+- name: Login to {{ cluster_name }} if authentication is enabled
+  uri:
+    url=http://{{ ansible_fqdn }}:8888/login
+    method=POST
+    body=' {"username":"admin","password":"{{ admin_password }}"}'
+    body_format=raw
+    status_code=200
+    return_content=yes
+  when: opscenter_auth
+  register: current_session
+
+- set_fact: session_id={{ current_session.json.sessionid }}
+  when: opscenter_auth
+
+- name: Check if a config for {{ cluster_name }} already exists
+  uri:
+    url=http://{{ ansible_fqdn }}:8888/cluster-configs/{{ cluster_name }}
+    method=GET
+    HEADER_opscenter-session={{ session_id|default("") }}
+    status_code=200,201,202,404
+    return_content=yes
+  register: current_config
+  tags:
+    - cluster_create
+
+- name: Register {{ cluster_name }} in OpsCenter
+  uri:
+    url=http://{{ ansible_fqdn }}:8888/cluster-configs
+    method=POST
+    HEADER_opscenter-session={{ session_id|default("") }}
+    body={{ cluster_def }}
+    body_format=json
+    timeout={{ opscenter_config.add_cluster_timeout }}
+    status_code=201
+  when: current_config.status==404
+  register: cluster
+  tags:
+    - cluster_create
+
+- name: Update the config for {{ cluster_name }} in OpsCenter
+  uri:
+    url=http://{{ ansible_fqdn }}:8888/cluster-configs/{{ cluster_name }}
+    method=PUT
+    HEADER_opscenter-session={{ session_id|default("") }}
+    body={{ cluster_def }}
+    body_format=json
+    timeout={{ opscenter_config.add_cluster_timeout }}
+    status_code=204
+  when: current_config.status==200 and cluster_def != current_config.json
+  register: cluster
+  tags:
+    - cluster_create
+
+#- name: Login to OpsCenter and get session
+#  uri:
+#    url: {{ ansible_fqdn }}/opscenter/index.html
+#    method: POST
+#    user: {{ opscenter_user }}
+#    password: {{ opscenter_pass }}
+#    force_basic_auth: yes
+#    status_code: 201
+#  register: sessionid

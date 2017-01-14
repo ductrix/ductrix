@@ -1,0 +1,29 @@
+- name: Install datastax-agent package (yum)
+  yum:
+    name: "{{ item }}"
+    update_cache: yes
+    state: installed
+  with_items:
+    - datastax-agent
+  notify: reload systemd
+  when: ansible_os_family == "RedHat"
+
+- name: Install datastax-agent package (apt)
+  apt:
+    name: "{{ item }}"
+    update_cache: yes
+    state: installed
+  with_items:
+    - datastax-agent
+  when: ansible_os_family == "Debian"
+
+- name: Update datastax-agent configuration
+  template: src=address.yaml.j2 dest=/var/lib/datastax-agent/conf/address.yaml
+  notify: restart datastax-agent
+
+- meta: flush_handlers
+
+- name: Make sure the datastax-agent is running
+  service: name=datastax-agent state=started enabled=yes
+  tags:
+    - services

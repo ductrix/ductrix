@@ -1,0 +1,14 @@
+# {{ ansible_managed }}
+
+{% for db in oratab_dbs.stdout_lines %}
+    {{ db.upper() }}=
+     (DESCRIPTION = 
+       (ADDRESS_LIST =
+         (ADDRESS = (PROTOCOL = TCP)(HOST = 127.0.0.1)(PORT = 1521))
+       )
+     (CONNECT_DATA =
+       (SERVICE_NAME = {{ db.upper() }})
+     )
+    )
+{% endfor %}
+

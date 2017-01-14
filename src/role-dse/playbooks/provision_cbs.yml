@@ -1,0 +1,61 @@
+- set_fact: outer_loop="{{ item }}"
+
+- name: "Create CBS Volumes for dse nodes from {{ outer_loop.dc_name }} dc (LON region)"
+  local_action:
+    module: rax_cbs
+    credentials: "{{ credentials_file_lon }}"
+    name: "{{ item[0].name }}_{{ item[1] }}"
+    volume_type: "{{ outer_loop.options.cbs.disks_type }}"
+    size: "{{ outer_loop.options.cbs.disks_size }}"
+    region: "{{ outer_loop.options.cloud.region }}"
+    state: present
+    wait: true
+  with_nested:
+    - rax_dse_{{ item.options.group|replace("-","_") }}.instances
+    - outer_loop.options.data_disks_devices
+  when: outer_loop.options.cloud.region=="LON"
+
+- name: "Attach CBS Volumes to dse nodes from {{ outer_loop.dc_name }} dc (LON region)"
+  local_action:
+    module: rax_cbs_attachments
+    credentials: "{{ credentials_file_lon }}"
+    volume: "{{ item[0].name }}_{{ item[1] }}"
+    server: "{{ item[0].id }}"
+    region: "{{ outer_loop.options.cloud.region }}"
+    device: "/dev/{{ item[1] }}"
+    state: present
+    wait: true
+  with_nested:
+    - rax_dse_{{ item.options.group|replace("-","_") }}.instances
+    - outer_loop.options.data_disks_devices
+  when: outer_loop.options.cloud.region=="LON"
+
+- name: "Create CBS Volumes for dse nodes from {{ outer_loop.dc_name }} dc (non-LON regions)"
+  local_action:
+    module: rax_cbs
+    credentials: "{{ credentials_file }}"
+    name: "{{ item[0].name }}_{{ item[1] }}"
+    volume_type: "{{ outer_loop.options.cbs.disks_type }}"
+    size: "{{ outer_loop.options.cbs.disks_size }}"
+    region: "{{ outer_loop.options.cloud.region }}"
+    state: present
+    wait: true
+  with_nested:
+    - rax_dse_{{ item.options.group|replace("-","_") }}.instances
+    - outer_loop.options.data_disks_devices
+  when: outer_loop.options.cloud.region!="LON"
+
+- name: "Attach CBS Volumes to dse nodes from {{ outer_loop.dc_name }} dc (non-LON regions)"
+  local_action:
+    module: rax_cbs_attachments
+    credentials: "{{ credentials_file }}"
+    volume: "{{ item[0].name }}_{{ item[1] }}"
+    server: "{{ item[0].id }}"
+    region: "{{ outer_loop.options.cloud.region }}"
+    device: "/dev/{{ item[1] }}"
+    state: present
+    wait: true
+  with_nested:
+    - rax_dse_{{ item.options.group|replace("-","_") }}.instances
+    - outer_loop.options.data_disks_devices
+  when: outer_loop.options.cloud.region!="LON"

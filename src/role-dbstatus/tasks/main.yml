@@ -1,0 +1,36 @@
+- name: check postgres databases running
+  hosts: "{{ db_host }}"
+  become: true 
+  gather_facts: no
+  remote_user: ec2-user
+  become_user: postgres
+  tasks:
+  - name: check postgres databases 
+    command: psql -H -l
+    register: postgres_db_status
+    changed_when: false
+    tags: postgres, all
+
+  - local_action: copy content="{{ postgres_db_status.stdout }}" dest="/var/www/ductrix/static/{{ db_host }}_postgres.status"
+    become: no
+    tags: postgres, all
+
+  - name: check mysql databases 
+    command:  mysql -u root --password=mysql1 -H -e 'show databases;'
+    register: mysql_db_status
+    changed_when: false
+    tags: mysql, all
+
+  - local_action: copy content="{{ mysql_db_status.stdout }}" dest="/var/www/ductrix/static/{{ db_host }}_mysql.status"
+    become: no
+    tags: mysql, all
+
+  - local_action: copy content="" dest=/var/www/ductrix/static/{{ db_host }}.status force=yes
+    become: no
+    changed_when: False
+    tags: merge, all
+
+  - name:  merge two files 
+    local_action: shell cat /var/www/ductrix/static/{{ db_host }}_*.status >> /var/www/ductrix/static/{{ db_host }}.status
+    become: no
+    tags: merge, all

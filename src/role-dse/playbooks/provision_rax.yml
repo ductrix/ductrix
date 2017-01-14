@@ -1,0 +1,55 @@
+- name: "Create the SSH keypair (LON region)"
+  local_action:
+    module: rax_keypair
+    credentials: "{{ credentials_file_lon }}"
+    name: "{{ cloud_config.ssh.keyname }}"
+    public_key: "{{ lookup('file', cloud_config.ssh.keyfile) }}"
+    region: "{{ item.options.cloud.region }}"
+  when: item.options.cloud.region=="LON"
+
+- name: "Create dse nodes for {{ item.dc_name }} dc (LON region)"
+  local_action:
+    module: rax
+    credentials: "{{ credentials_file_lon }}"
+    name: "{{ item.options.group }}-%02d.{{ cloud_config.domain|lower }}"
+    image: "{{ item.options.cloud.image }}"
+    flavor: "{{ item.options.cloud.flavor }}"
+    region: "{{ item.options.cloud.region }}"
+    key_name: "{{ cloud_config.ssh.keyname }}"
+    exact_count: yes
+    auto_increment: true
+    group: "{{ item.options.group }}"
+    state: present
+    count: "{{ item.options.cloud.nodes_count }}"
+    wait: true
+    wait_timeout: 900
+  register: rax_dse_{{ item.options.group|replace("-","_") }}
+  when: item.options.cloud.region=="LON"
+
+- name: "Create the SSH keypair (non-LON regions)"
+  local_action:
+    module: rax_keypair
+    credentials: "{{ credentials_file }}"
+    name: "{{ cloud_config.ssh.keyname }}"
+    public_key: "{{ lookup('file', cloud_config.ssh.keyfile) }}"
+    region: "{{ item.options.cloud.region }}"
+  when: item.options.cloud.region!="LON"
+
+- name: "Create dse nodes for {{ item.dc_name }} dc (non-LON regions)"
+  local_action:
+    module: rax
+    credentials: "{{ credentials_file }}"
+    name: "{{ item.options.group }}-%02d.{{ cloud_config.domain|lower }}"
+    image: "{{ item.options.cloud.image }}"
+    flavor: "{{ item.options.cloud.flavor }}"
+    region: "{{ item.options.cloud.region }}"
+    key_name: "{{ cloud_config.ssh.keyname }}"
+    exact_count: yes
+    auto_increment: true
+    group: "{{ item.options.group }}"
+    state: present
+    count: "{{ item.options.cloud.nodes_count }}"
+    wait: true
+    wait_timeout: 900
+  register: rax_dse_{{ item.options.group|replace("-","_") }}
+  when: item.options.cloud.region!="LON"

@@ -1,0 +1,329 @@
+# orahost playbook 
+---
+
+  - name: Check for correct OS family & min version
+    assert: 
+      that: "ansible_os_family == '{{ os_family_supported }}'"
+      that: "ansible_distribution_version >= '{{ os_min_supported_version }}'"
+    tags: 
+     - oscheck
+
+  - name: Install packages required by Oracle
+    yum: name={{ item }} state=installed
+    with_items: '{{oracle_packages}}' 
+    when: install_os_packages
+    tags: os_packages
+
+  - name: Install packages required by Oracle for ASMlib
+    yum: name={{ item }} state=installed
+    with_items: '{{oracle_asm_packages}}'
+    when: install_os_packages and device_persistence == 'asmlib'
+    tags: os_packages
+
+#  - name: Disable iptables 
+#    service: name=iptables state=stopped enabled=no
+#    when: disable_iptables
+#    tags: iptables
+#    register: iptables
+
+#  - name: Disable firewalld
+#    service: name=firewalld state=stopped enabled=no
+#    when: disable_firewalld
+#    tags: firewalld
+#    register: firewalld
+
+  - name: Disable selinux (permanently)
+    selinux: state=disabled
+    when: disable_selinux
+    tags: selinux
+    register: selinux
+
+  - name: Disable selinux (runtime)
+    shell: setenforce 0
+    when: disable_selinux
+    tags: selinux
+    ignore_errors: true
+
+  - name: Check dns for host
+    command: nslookup {{ ansible_hostname }}
+    register: ns
+    ignore_errors: True
+    tags: etchosts
+
+  - name: Add host to /etc/hosts if needed
+    lineinfile: dest=/etc/hosts regexp='.*{{ ansible_fqdn }}$' line="{{ ansible_default_ipv4.address }} {{ ansible_hostname }} {{ ansible_fqdn }}" state=present
+    when: "'find {{ ansible_hostname }}: NXDOMAIN' in ns.stdout"
+    tags: etchosts
+
+#  - name: Add local node's ip & hostname to /etc/hosts
+#    lineinfile: dest=/etc/hosts line="{{ ansible_default_ipv4.address }} {{ ansible_fqdn }} {{ ansible_hostname }} " state=present
+#    when: configure_etc_hosts and ansible_default_ipv4.address is defined
+
+  - name: User | Add group(s)
+    group: name={{ item.group }} gid={{ item.gid }} state=present 
+    with_items: '{{oracle_groups}}'
+    tags:
+     - group
+
+  - name: User | Add Oracle user
+    user: name={{ item.username }}  group={{ item.primgroup }} groups={{ item.othergroups }} uid={{ item.uid }} generate_ssh_key=yes append=yes state=present password={{ item.passwd }}
+    with_items: '{{oracle_users}}'
+    tags:
+     - user
+
+  - name: User | Add Grid user
+    user: name={{ item.username }}  group={{ item.primgroup }} groups={{ item.othergroups }} uid={{ item.uid }} generate_ssh_key=yes append=yes state=present password={{ item.passwd }}
+    when: role_separation
+    with_items: '{{grid_users}}'
+    tags:
+     - user
+
+  - name: User | Add Oracle user to sudoers
+    template: src=sudoers.j2 dest=/etc/sudoers.d/{{ item.username }} owner=root mode=0600
+    with_items: '{{oracle_users}}'
+    when: configure_oracle_sudo
+    tags:
+     - sudoadd
+
+  - name: User | Add Grid user to sudoers
+    template: src=sudoers.j2 dest=/etc/sudoers.d/{{ item.username }} owner=root mode=0600
+    with_items: '{{grid_users}}'
+    when: role_separation and configure_oracle_sudo
+    tags:
+     - sudoadd
+
+  - name: ssh-keys | Generate SSH keys 
+    local_action: shell rm -f /tmp/id_rsa*; ssh-keygen -q -N "" -f /tmp/id_rsa ; chmod +r /tmp/id_rsa; cat /tmp/id_rsa.pub > /tmp/authorized_keys
+    ignore_errors: True
+    when: configure_ssh and master_node and configure_cluster
+    tags:
+     - sshkeys
+
+  - name: ssh-keys | Add ssh-keys & authorized_keys to oracle user
+    copy: src={{ item[1] }} dest=/home/{{ item[0].username }}/.ssh  owner={{ item[0].username }} group={{ item[0].primgroup }} force=yes mode=600
+    when: configure_ssh and configure_cluster 
+    with_nested:
+        - '{{oracle_users}}'
+        - '{{ssh_keys}}'
+    tags:
+     - sshkeys
+
+  - name: ssh-keys | Add ssh-keys & authorized_keys to grid user
+    copy: src={{ item[1] }} dest=/home/{{ item[0].username }}/.ssh  owner={{ item[0].username }} group={{ item[0].primgroup }} force=yes mode=600
+    when: configure_ssh and configure_cluster and role_separation 
+    with_nested:
+        - '{{grid_users}}'
+        - '{{ssh_keys}}'
+    tags:
+     - sshkeys
+
+  - name: ssh-keys | Add short name to known_hosts
+    local_action: shell ssh-keyscan -p {{ansible_ssh_port|default(22)}} -H {{inventory_hostname}} 2> /dev/null >> {{keyfile}}
+    ignore_errors: True
+    when: configure_ssh and configure_cluster
+    tags:
+     - sshkeys
+
+  - name: ssh-keys | Add FQDN to known_hosts
+    local_action: shell ssh-keyscan -p {{ansible_ssh_port|default(22)}} -H {{ansible_fqdn}} 2> /dev/null >> {{keyfile}}
+    ignore_errors: True
+    when: configure_ssh and configure_cluster
+    tags:
+     - sshkeys
+
+  - name: ssh-keys | Add IPv4 to known_hosts
+    local_action: shell ssh-keyscan -p {{ansible_ssh_port|default(22)}} -H {{ansible_default_ipv4.address}} 2> /dev/null >> {{keyfile}}
+    ignore_errors: True
+    when: configure_ssh and configure_cluster
+    tags:
+     - sshkeys
+
+  - name: ssh-keys | Copy known_hosts to oracle user
+    copy: src={{keyfile}} dest=/home/{{ item.username }}/.ssh/known_hosts owner={{ item.username }} group={{ item.primgroup }}
+    with_items: '{{oracle_users}}'
+    when: configure_ssh and configure_cluster
+    tags:
+     - sshkeys
+
+  - name: ssh-keys | Copy known_hosts to grid user
+    copy: src={{keyfile}} dest=/home/{{ item.username }}/.ssh/known_hosts owner={{ item.username }} group={{ item.primgroup }}
+    with_items: '{{grid_users}}'
+    when: configure_ssh and configure_cluster and role_separation
+    tags:
+     - sshkeys
+
+  - name: ssh-keys | Remove generated keys from control machine
+    local_action: file  path="{{ item }}" state=absent
+    with_items:
+        - "{{ ssh_keys }}"
+        - "{{ keyfile }}"
+    when: master_node and configure_ssh and configure_cluster
+    ignore_errors: true
+    tags:
+     - sshkeys
+
+
+#  - name: filesystem | Create partition and pv
+#    shell:  parted -a optimal {{ item.value.device }} "mklabel gpt mkpart primary 1 -1"; pvcreate {{ item.value.pvname }}
+#    args:
+#     creates: "{{ item.value.pvname }}"
+#    with_dict: '{{host_fs_layout}}'
+#    when: configure_host_disks
+#    tags: hostfs
+
+  - name: filesystem | Create partition and pv
+    shell:  pvcreate "{{ item.value.device }}"
+#    args:
+#     creates: "{{ item.value.pvname }}"
+    with_dict: '{{host_fs_layout}}'
+    when: configure_host_disks
+    register: create_part
+    tags: hostfs
+
+#  - name: filesystem | Create partition and pv
+#    script: disks.sh {{ item.value.device }}
+#    with_dict: host_fs_layout
+#    when: configure_host_disks
+#    register: create_part
+#    tags: hostfs
+  
+  - name: filesystem | Create vg
+    #lvg: vg={{ item.value.vgname }} pvs={{ item.value.pvname }} state=present #vg_options="-f" # "-f used as workaround for https://github.com/ansible/ansible/pull/6859"
+    lvg: vg={{ item.value.vgname }} pvs={{ item.value.pvname }} state=present #vg_options="-f" # "-f used as workaround for https://github.com/ansible/ansible/pull/6859"
+    with_dict: '{{host_fs_layout}}'
+    when: configure_host_disks and create_part.changed
+    register: create_vg
+    tags: hostfs
+
+  - name: filesystem | create lv
+    lvol: vg={{ item.value.vgname }} lv={{ item.value.lvname }} size=100%FREE state=present
+    with_dict: '{{host_fs_layout}}'
+    when: configure_host_disks and create_vg.changed
+    register: create_lv 
+    tags: hostfs
+
+  - name: filesystem | create fs
+    filesystem: fstype={{ item.value.fstype }} dev=/dev/{{ item.value.vgname }}/{{ item.value.lvname }} 
+    with_dict: '{{host_fs_layout}}'
+    when: configure_host_disks and create_lv.changed
+    register: create_lv  
+    tags: hostfs
+
+  - name: filesytem | mount dir
+    mount: name={{ item.value.mntp }} src=/dev/{{ item.value.vgname }}/{{ item.value.lvname }} dump=1 passno=2 fstype={{ item.value.fstype }} state=mounted
+    with_dict: '{{host_fs_layout}}'
+    when: configure_host_disks
+    tags: hostfs
+
+  - name: filesystem | Change permission on directories
+    file: path={{ item.value.mntp }} state=directory owner={{ oracle_user }} group={{ oracle_group }} mode=775
+    with_dict: '{{host_fs_layout}}'
+    tags: hostfs
+
+
+  - name: Oracle-recommended kernel settings
+    sysctl: name={{ item.name }} value="{{ item.value }}" state=present reload=yes ignoreerrors=yes
+    with_items: '{{oracle_sysconfig}}'
+    tags: sysconfig
+
+  - name: Oracle-recommended PAM config
+    lineinfile: dest=/etc/pam.d/login state=present line="session required pam_limits.so"
+    tags: pamconfig
+
+  - name: Oracle-recommended security limits
+    template: src=oracle-seclimits.conf.j2 dest=/etc/security/limits.d/99-oracle-limits.conf backup=yes
+    tags: seclimit
+
+  - name: Count number of kernel lines that needs to be changed (numa=off transparent_hugepage=never)
+    shell: cat /etc/grub.conf | grep title |wc -l
+    register: count
+    tags: thpnuma
+#
+#  - name: Disable Transparent Hugepages (in grub.conf)
+#    lineinfile: dest=/etc/grub.conf
+#              backup=True
+#              backrefs=True
+#              state=present
+#              regexp='(^\s+kernel(\s+(?!transparent_hugepage=never)[\w=/\-\.]+)*)\s*$'
+#              line='\1 transparent_hugepage=never'
+#    with_sequence: start=0 end={{ count.stdout }}
+#    tags: thpnuma
+#
+#  - name: Disable Numa (in grub.conf)
+#    lineinfile: dest=/etc/grub.conf
+#              backup=True
+#              backrefs=True
+#              state=present
+#              regexp='(^\s+kernel(\s+(?!numa=off)[\w=/\-\.]+)*)\s*$'
+#              line='\1 numa=off'
+#    with_sequence: start=0 end={{ count.stdout }}
+#    tags: thpnuma
+#    when: disable_numa_boot
+
+#  - name: Disable Transparent Hugepages (runtime)
+#    shell: if test -f /sys/kernel/mm/transparent_hugepage/enabled; then echo never > /sys/kernel/mm/transparent_hugepage/enabled; fi;
+#    tags: tphnuma
+#
+#  - name: Network | Setup ip-address for RAC Interconnect
+#    template: src=ifcfg-eth1.j2 dest=/etc/sysconfig/network-scripts/ifcfg-eth1 owner=root mode=0644
+#    when: configure_interconnect and configure_cluster
+#    tags:
+#     - eth1
+#    register: ic
+  
+  - name: Network | Bring up eth1
+    service: name=network  state=restarted
+    when: configure_interconnect and configure_cluster and ic.changed
+    tags:
+     - eth1
+
+  - name: Create stage directory
+    file: dest={{ oracle_stage }} mode=775 owner={{ oracle_user }} group={{ oracle_group }} state=directory
+
+  - name: Create rsp stage directory
+    file: dest={{ oracle_rsp_stage }} mode=775 owner={{ oracle_user }} group={{ oracle_group }} state=directory
+
+  - name: Create udev stage directory
+    file: dest={{ oracle_stage }}/udev mode=775 owner={{ oracle_user }} group={{ oracle_group }} state=directory
+    when: device_persistence == 'udev'
+
+  - name: Asmlib | Configure Oracle Asmlib (1)
+    template: src=oracleasm-configure.expect.j2  dest={{ oracle_rsp_stage }}/asmlib-configure.expect owner=root mode=0777 force=yes
+    when: device_persistence == 'asmlib'
+    tags:
+      - asmlibconfig
+    register: asmlib_expect_config
+
+  - name: Asmlib | Configure Oracle Asmlib (2)
+    shell: "{{ oracle_rsp_stage }}/asmlib-configure.expect"
+    when: device_persistence == 'asmlib' and asmlib_expect_config.changed
+    tags:
+      - asmlibconfig
+
+  - name: Asmlib | Enable and start Oracle Asmlib
+    service: name=oracleasm  state=started  enabled=yes
+    when: device_persistence == 'asmlib' 
+    tags:
+      - asmlibconfig
+  
+  - name: Asmlib | Restart Asmlib
+    service: name=oracleasm  state=restarted
+    when: device_persistence == 'asmlib' and asmlib_expect_config.changed
+    tags:
+      - asmlibconfig
+
+#  - name: VNC | Create directory
+#    file: name=/home/{{ oracle_user }}/.vnc  state=directory owner={{ oracle_user }}  group={{ oracle_group }}
+#    tags:
+#      - vnc
+  
+#  - name: VNC | Copy passwd file
+#    copy: src=passwd  dest=/home/{{ oracle_user }}/.vnc/passwd  owner={{ oracle_user }}  group={{ oracle_group }} backup=yes
+#    tags:
+#      - vnc
+
+#  - name: VNC | Start VNC server
+#    shell: su - oracle -c vncserver start
+#    tags:
+#      - vnc
+

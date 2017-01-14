@@ -1,0 +1,82 @@
+# roles/collectd/tasks/common.yml
+# Tasks that are common to servers and clients
+---
+
+- name: Ensure the EPEL repository is available
+  yum:
+    pkg: epel-release
+    state: installed
+  tags: collectd
+- name: Install packages for collectd
+  yum:
+    pkg: "{{ item }}"
+    state: installed
+  with_items: "{{ collectd_packages}}"
+  tags: collectd
+
+- name: Ensure the collectd service is started
+  service:
+    name: "{{ collectd_service }}"
+    state: started
+    enabled: true
+  tags: collectd
+
+- name: Install main configuration file
+  template:
+    src: etc_collectd.conf.j2
+    dest: "{{ collectd_config_file }}"
+    validate: "collectd -t -C %s"
+  notify: restart collectd
+  tags: collectd
+
+- name: Install network configuration file
+  template:
+    src: etc_collectd.d_network.conf.j2
+    dest: "{{ collectd_include_dir }}/network.conf"
+    validate: "collectd -t -C %s"
+  notify: restart collectd
+  tags: collectd
+
+- name: Install mysql configuration file
+  template:
+    src: etc_collectd.d_mysql.conf.j2
+    dest: "{{ collectd_include_dir }}/mysql.conf"
+    validate: "collectd -t -C %s"
+  notify: restart collectd
+  tags: collectd,setup_mysql
+
+- name: Install postgres configuration file
+  template:
+    src: etc_collectd.d_postgresql.conf.j2
+    dest: "{{ collectd_include_dir }}/postgresql.conf"
+    validate: "collectd -t -C %s"
+  notify: restart collectd
+  tags: collectd,setup_postgres
+
+- name: Ensure the collectd service is restarted
+  service:
+    name: "{{ collectd_service }}"
+    state: restarted
+    enabled: true
+  tags: collectd
+
+#- name: Install oracle configuration file
+#  copy: src=/root/ductrix/main/role-collectd/files/getoradata dest=/home/oracle/pyorastats/getoradata mode=700
+#  tags: setup_oracle
+#
+#- name: Install oracle configuration file
+#  copy: src=/root/ductrix/main/role-collectd/files/ora_system_stats.py dest=/home/oracle/pyorastats/ora_system_stats.py mode=700
+#  tags: setup_oracle
+#
+#- name: Install oracle configuration file
+#  command: bash -c "cat /etc/oratab |grep -v \"^#\"|cut -f1 -d':' -s"
+#  register: oratab_dbs
+#  tags: setup_oracle
+#
+#- name: Install oracle configuration file
+#  template:
+#    src: etc_collectd.d_oracle.conf.j2
+#    dest: "{{ collectd_include_dir }}/oracle.conf"
+#    validate: "collectd -t -C %s"
+#  notify: restart collectd
+#  tags: setup_oracle

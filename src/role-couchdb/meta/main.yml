@@ -1,0 +1,21 @@
+---
+galaxy_info:
+  author: Andrew Rothstein
+  description: installs couchdb
+  company: BlackRock
+  license:
+    - MIT
+  min_ansible_version: 1.2
+  platforms:
+    - name: Ubuntu
+      versions:
+        - trusty
+        - xenial
+
+  galaxy_tags:
+    - development
+
+dependencies:
+  - andrewrothstein.curl
+  - andrewrothstein.unarchive-deps
+  

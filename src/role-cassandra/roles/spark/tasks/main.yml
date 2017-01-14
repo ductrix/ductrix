@@ -1,0 +1,99 @@
+---
+# Copyright (c) 2014 Lekane Oy. All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+#    * Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#    * Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following disclaimer
+# in the documentation and/or other materials provided with the
+# distribution.
+#    * Neither the name of Lekane Oy nor the names of its
+# contributors may be used to endorse or promote products derived from
+# this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+- name: Set spark_master node fact
+  set_fact: spark_master_node={{ groups[['spark_master_nodes'][0]][0] }}
+- name:  Set spark_master ip fact
+  set_fact: spark_master_ip="{{ hostvars[spark_master_node].spark_master_ip }}"
+- debug: var=spark_master_ip
+- name: Create spark ssh key
+  local_action: command ssh-keygen -t rsa -P '' -f /tmp/spark_ssh creates=/tmp/spark_ssh
+  sudo: no
+  run_once: True
+- name: Create spark group
+  group: name=spark state=present
+- name: Create spark user
+  user: name=spark shell=/bin/bash group=spark
+- name: Create spark user ssh directory
+  file: path=/home/spark/.ssh state=directory owner=spark group=spark mode=0700
+- name: Copy spark ssh keys
+  copy: src=/tmp/spark_ssh dest=/home/spark/.ssh/id_rsa owner=spark group=spark mode=0600
+- name: Copy spark ssh pub key
+  copy: src=/tmp/spark_ssh.pub dest=/home/spark/.ssh/id_rsa.pub owner=spark group=spark mode=0644
+- name: Setup ssh authorized key for passwordless login for spark user
+  authorized_key: user=spark key="{{ lookup('file', '/tmp/spark_ssh.pub') }}"
+- name: Download Spark
+  get_url: url={{ spark_url }} dest=/tmp/{{ spark_version }}.tgz validate_certs=no
+- name: Extract Spark
+  shell: tar -zxvpf /tmp/{{ spark_version }}.tgz -C /opt
+- name: Check if spark symlink exists
+  stat: path=/opt/spark
+  register: spark_path
+- name: Remove spark symlink
+  file: "path=/opt/spark state=absent"
+  when: spark_path.stat.islnk is defined
+- name: Create spark symlink
+  file: "src=/opt/{{ spark_version }} dest=/opt/spark state=link"
+- name: Configure Spark
+  template: src={{item}}.j2 dest=/opt/spark/conf/{{item}} owner=spark group=spark
+  with_items:
+     - spark-defaults.conf
+     - spark-env.sh
+     - log4j.properties
+- name: Delete existing Spark directories
+  file: path=/opt/spark/{{item}} state=absent
+  with_items:
+    - logs
+    - pids
+    - work
+    - tmp
+- name: Create Spark directories
+  file: path=/data/spark/{{item}} state=directory owner=spark group=spark mode=0775
+  with_items:
+    - logs
+    - pids
+    - work
+    - tmp
+- name: Symlink Spark directories
+  file: src=/data/spark/{{item}} dest=/opt/spark/{{item}} state=link
+  with_items:
+    - logs
+    - pids
+    - work
+    - tmp
+- name: Create spark-cassandra-connector directory
+  file: path=/opt/spark/spark-cassandra-connector state=directory owner=spark group=spark mode=0775
+- name: Copy spark-cassandra-connector jar
+  copy: src=spark-cassandra-connector-assembly-{{ spark_connector_version }}.jar dest=/opt/spark/spark-cassandra-connector/spark-cassandra-connector-assembly-{{ spark_connector_version }}.jar owner=spark group=spark mode=0644
+- name: Copy spark-shell-init.spark
+  copy: src=spark-shell-init.spark dest=/opt/spark/spark-shell-init.spark owner=spark group=spark mode=0644
+- name: Configure all Spark directory permissions
+  file: path=/opt/{{ spark_version }} state=directory recurse=yes mode=0755 owner=spark group=spark
+- name: Template slaves list
+  template: src=slaves.j2 dest=/opt/spark/conf/slaves owner=spark group=spark mode=0664

@@ -1,0 +1,27 @@
+---
+
+
+ - name: Host configuration
+   hosts: mygroupasm
+   user: ansible
+   sudo: yes
+   roles:
+      - common
+      - orahost
+      - orahost-storage
+
+ - name: Oracle Grid Infrastructure installation & ASM Configuration
+   hosts: mygroupasm
+   user: ansible
+   sudo: yes
+   roles:
+      - oraswgi-install
+      - oraasm-createdg
+
+ - name: Database Server Installation & Database Creation
+   hosts: mygroupasm
+   user: ansible
+   sudo: yes
+   roles:
+      - oraswdb-install
+      - oradb-create

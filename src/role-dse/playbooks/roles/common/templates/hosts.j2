@@ -1,0 +1,9 @@
+127.0.0.1 localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1 localhost localhost.localdomain localhost6 localhost6.localdomain6
+{% for node in play_hosts|sort %}
+{% if dc_name == hostvars[node]['dc_name'] -%}
+{{ hostvars[node]['ansible_'~hostvars[node]['options']['listen_interface']]['ipv4']['address'] }} {{ hostvars[node]['ansible_fqdn'] }} {{ hostvars[node]['ansible_hostname'] }}
+{% else -%}
+{{ hostvars[node]['ansible_'~hostvars[node]['options']['broadcast_interface']]['ipv4']['address'] }} {{ hostvars[node]['ansible_fqdn'] }} {{ hostvars[node]['ansible_hostname'] }}
+{% endif %}
+{% endfor %}

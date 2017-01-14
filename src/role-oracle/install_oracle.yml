@@ -1,0 +1,15 @@
+---
+ - name: Host configuration
+   hosts: "{{ name }}"
+   user: root
+   roles:
+    - common
+    - orahost
+
+ - name: Oracle Database server installation & Database Creation
+   hosts: "{{ name }}"
+   user: root
+   sudo_user: oracle
+   roles: 
+    - oraswdb-install 
+    - oradb-create

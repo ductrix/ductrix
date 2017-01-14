@@ -1,0 +1,16 @@
+
+agent_rpc_interface: {{ hostvars[inventory_hostname]["ansible_"~options.rpc_interface]['ipv4']['address'] }}
+
+agent_rpc_broadcast_address: {% if dc_name == opscenter_dc -%}
+{{ hostvars[inventory_hostname]["ansible_"~options.rpc_interface]['ipv4']['address'] }}
+{% else -%}
+{{ hostvars[inventory_hostname]["ansible_"~options.broadcast_interface]['ipv4']['address'] }}
+{% endif %}
+
+stomp_interface: {% for node in groups['opscenter-group'] %}
+{%- if dc_name == opscenter_dc -%}
+{{ hostvars[node]["ansible_"~hostvars[node]['options']['rpc_interface']]['ipv4']['address'] }}
+{% else -%}
+{{ hostvars[node]["ansible_"~hostvars[node]['options']['broadcast_interface']]['ipv4']['address'] }}
+{% endif %}
+{% endfor %}

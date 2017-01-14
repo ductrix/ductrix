@@ -1,0 +1,14 @@
+---
+
+- hosts: all
+  sudo: true
+  vars:
+    collectd_server: 192.168.56.40
+  tasks:
+    - name: Ensure firewall is not running
+      service:
+        name: firewalld
+        state: stopped
+  roles:
+    - collectd
+

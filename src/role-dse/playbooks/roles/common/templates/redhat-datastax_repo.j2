@@ -1,0 +1,6 @@
+[datastax] 
+name = DataStax Repo for DataStax Enterprise
+baseurl=http://{{ dserepouser }}:{{ dserepopass }}@{{ dsehost }}/enterprise
+enabled=1
+gpgcheck=1
+gpgkey={{ datastax_repo_key }}

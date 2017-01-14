@@ -1,0 +1,12 @@
+---
+- name: Update the Cassandra configuration
+  template: src=cassandra.yaml.j2 dest=/etc/dse/cassandra/cassandra.yaml owner=cassandra group=cassandra
+  notify: restart dse
+
+- name: Update the Cassandra Snitch configuration
+  template: src=cassandra-rackdc.properties.j2 dest=/etc/dse/cassandra/cassandra-rackdc.properties owner=cassandra group=cassandra
+  notify: restart dse
+
+- name: Update the DSE service configuration
+  template: src=dse.j2 dest=/etc/default/dse owner=cassandra group=cassandra
+  notify: restart dse

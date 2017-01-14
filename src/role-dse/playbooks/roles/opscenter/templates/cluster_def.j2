@@ -1,0 +1,11 @@
+{
+    "cassandra": {
+      "seed_hosts": "{% for node in groups['dse-cluster'] -%}
+{% if hostvars[node]['dc_name'] == opscenter_dc %}
+{{ hostvars[node]["ansible_"~hostvars[node]['options']['rpc_interface']]['ipv4']['address'] }}
+{%- else -%}
+{{ hostvars[node]["ansible_"~hostvars[node]['options']['broadcast_interface']]['ipv4']['address'] }}
+{%- endif -%}{% if not loop.last %}, {% endif %}
+{%- endfor %}"
+    }
+}

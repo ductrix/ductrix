@@ -1,0 +1,40 @@
+packages:
+  - python-simplejson
+  - python-httplib2
+  - man
+  - man-pages
+  - vim-enhanced
+  - sysstat
+  - lsof
+  - jwhois
+  - telnet
+  - nc
+  - libselinux-python
+  - ntpdate
+  - chrony
+  - parted
+  - mc
+  - perl
+  - openssh-clients
+  - util-linux-ng
+  - iotop
+  - links
+  - unzip
+  - curl
+  - wget
+  - xfsprogs
+
+update_grub: 'cd && grub2-mkconfig -o "$(readlink -n /etc/grub2.cfg)"'
+
+ntp_service: chronyd
+ntp_sync: "systemctl restart ntpdate"
+
+epel_rpm_url: "http://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm"
+
+epel_yum: "epel-release"
+
+resolv_conf: "/etc/resolv.conf"
+
+networking_path: "/etc/sysconfig/network-scripts"
+networking_eth: "redhat-ifcfg-eth.j2"
+networking_bond: "redhat-ifcfg-bond.j2"

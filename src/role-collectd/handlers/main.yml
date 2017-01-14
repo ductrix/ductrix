@@ -1,0 +1,12 @@
+# roles/collectd/handlers/main.yml
+---
+
+- name: restart collectd
+  service:
+    name: collectd
+    state: restarted
+
+- name: restart httpd
+  service:
+    name: httpd
+    state: restarted

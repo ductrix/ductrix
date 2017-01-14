@@ -1,0 +1,20 @@
+---
+- name: disable selinux
+  selinux: state=disabled
+  register: selinux_disable
+
+- name: restart vm
+  shell: "sleep 2 && shutdown -r now 'Ansible updates triggered'"
+  async: 1
+  poll: 0
+  ignore_errors: yes
+  when: selinux_disable.changed
+  register: rebootedvm
+  changed_when: True
+  tags: restart_vm
+
+
+- name: waiting for server to come back
+  local_action: wait_for host={{ ansible_host }} state=started delay=10 timeout=50
+  when: rebootedvm.changed
+  tags: restart_vm

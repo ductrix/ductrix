@@ -1,0 +1,8 @@
+#!/bin/bash
+. /etc/profile
+. /home/oracle/.bash_profile
+export ORACLE_SID=${1}
+export ORAENV_ASK=NO
+export ORACLE_HOME=$(grep $ORACLE_SID /etc/oratab | awk -F: '{print $2}')
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ORACLE_HOME/lib/
+python "/home/oracle/pyorastats/ora_system_stats.py" "ALL"  -s "$ORACLE_SID" -f "${2}.${ORACLE_SID}"

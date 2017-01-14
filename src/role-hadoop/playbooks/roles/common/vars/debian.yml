@@ -1,0 +1,32 @@
+packages:
+  - python-simplejson
+  - python-httplib2
+  - man-db
+  - vim
+  - sysstat
+  - lsof
+  - telnet
+  - netcat
+  - python-selinux
+  - ntp
+  - parted
+  - mc
+  - perl
+  - iotop
+  - links
+  - unzip
+  - curl
+  - wget
+  - ifenslave
+  - xfsprogs
+
+update_grub: "/usr/sbin/update-grub"
+
+ntp_service: ntp
+ntp_sync: "/usr/sbin/ntpd -gq"
+
+resolv_conf: "/etc/resolvconf/resolv.conf.d/tail"
+
+networking_path: "/etc/network/interfaces.d"
+networking_eth: "debian-ifcfg-eth.j2"
+networking_bond: "debian-ifcfg-bond.j2"

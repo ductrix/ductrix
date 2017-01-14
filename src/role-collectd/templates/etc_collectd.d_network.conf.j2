@@ -1,0 +1,19 @@
+# Config file for Collectd plugin network. This specifies whether this host
+# behaves like a server or a client
+#
+# {{ ansible_managed }}
+
+LoadPlugin write_graphite
+<Plugin write_graphite>
+    <Node "graphite">
+            Host "{{ ansible_env["SSH_CLIENT"].split()[0] }}"
+            Port "2003"
+            Protocol "tcp"
+            Prefix "collectd."
+            EscapeCharacter "_"
+            StoreRates true
+            LogSendErrors true
+            AlwaysAppendDS false
+    </Node>
+</Plugin>
+

@@ -1,0 +1,13 @@
+# Config file for Collectd plugin network. This specifies whether this host
+# behaves like a server or a client
+#
+# {{ ansible_managed }}
+
+LoadPlugin exec
+<Plugin exec>
+        Interval 5
+        {% for db in oratab_dbs.stdout_lines %}
+            Exec "oracle" "/home/oracle/pyorastats/getoradata" "{{ db }}" "{{ poolname }}"
+        {% endfor %}
+</Plugin>
+

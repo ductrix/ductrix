@@ -1,0 +1,8 @@
+---
+ - name: Database Server Installation & Database Creation
+   hosts: dbhosts
+   user: root
+   gather_facts: no
+   become: yes
+   roles:
+    - common 

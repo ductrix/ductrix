@@ -160,8 +160,8 @@ def deploy_server( args, tags=None):
             ssh_user = 'root'
 
         # This key will be added to the .authorized_keys file on the server
-        #with open('/{0}/.ssh/id_rsa.pub'.format(ssh_user), 'r') as keyfile:
-        with open('/var/hfiles/id_rsa.pub'.format(ssh_user), 'r') as keyfile:
+        with open('/{0}/.ssh/id_rsa.pub'.format(ssh_user), 'r') as keyfile:
+        #with open('/var/hfiles/id_rsa.pub'.format(ssh_user), 'r') as keyfile:
             pubkey = keyfile.read()
 
         deploy_parms = {

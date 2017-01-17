@@ -235,7 +235,7 @@
 
     - name: get ip address
       connection: local
-      command: /usr/bin/cat "{{ tmp_ip_file }}"
+      command: /bin/cat "{{ tmp_ip_file }}"
       register: server_ip
       tags: get_ip,all
 

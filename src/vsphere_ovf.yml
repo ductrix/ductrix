@@ -153,7 +153,7 @@
           parent: "{{ parentfolder }}" 
           name : "{{ poolname }}"
         guest_operations_manager: fileManager
-        put_file: "/root/ductrix/newlybuilt.sh"
+        put_file: "/var/ductrix/src/newlybuilt.sh"
         spec:
           type: InitiateFileTransferToGuest
           value:

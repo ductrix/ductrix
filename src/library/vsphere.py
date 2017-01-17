@@ -320,16 +320,16 @@ class Vsphere(object):
         #####################################
 
 
-#        context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
-#        context.verify_mode = ssl.CERT_NONE
+        context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
+        context.verify_mode = ssl.CERT_NONE
 
 
-#        if not check_ssl:
-#            ssl._create_default_https_context = ssl._create_unverified_context
+        if not check_ssl:
+            ssl._create_default_https_context = ssl._create_unverified_context
 
         try:
-            #self.si = SmartConnect(host = self.vsphere_host, user = login_username, pwd = login_password, sslContext=context)
-            self.si = SmartConnect(host = self.vsphere_host, user = login_username, pwd = login_password)
+            self.si = SmartConnect(host = self.vsphere_host, user = login_username, pwd = login_password, sslContext=context)
+            #self.si = SmartConnect(host = self.vsphere_host, user = login_username, pwd = login_password)
         except:
             self.module.fail_json(msg = 'Could not connect to host %s' % self.vsphere_host)
 

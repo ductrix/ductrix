@@ -242,7 +242,7 @@
     - name: Add the newly created instance(s) to the local host group (located inside the directory)
       local_action: lineinfile 
                      dest="/etc/ansible/hosts" 
-                     regexp="{{ name }}" insertafter="[vm_servers]" line="{{ name }} ansible_host={{ server_ip.stdout }}"
+                     regexp="{{ name }}" insertafter="[servers]" line="{{ name }} ansible_host={{ server_ip.stdout }}"
       when: server_ip.changed,all
       tags: get_ip,all
 

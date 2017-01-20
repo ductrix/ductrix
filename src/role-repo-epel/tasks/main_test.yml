@@ -1,0 +1,19 @@
+---
+- name: Install EPEL repo.
+  hosts: ovf31
+  tasks:
+    - name: Install the key
+      yum:
+        name: "https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm"
+#        name: "{{ epel_repo_url }}"
+        state: present
+      register: result
+      until: '"failed" not in result'
+      retries: 5
+      delay: 10
+
+    - name: Import EPEL GPG key.
+      rpm_key:
+        #key: "{{ epel_repo_gpg_key_url }}"
+        key: "/etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-7"
+        state: present

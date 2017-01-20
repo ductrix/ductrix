@@ -246,16 +246,3 @@
       when: server_ip.changed,all
       tags: get_ip,all
 
-    - name: Check DNS For the hostanme 
-      command: getent hosts "{{ name }}"
-      register: ns
-      failed_when: ns.rc != 2
-      ignore_errors: yes
-      tags: set_hosts, all
-
-    - name: Add new vm to /etc/hosts on local server
-      local_action: lineinfile 
-                     dest="/etc/hosts" 
-                     regexp="{{ name }}" line="{{server_ip.stdout}}  {{ name }}"
-      when: ns.rc == 2
-      tags: set_hosts, ,all

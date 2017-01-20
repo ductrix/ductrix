@@ -70,7 +70,12 @@ def runplay(playbook_nm, host, tags, args):
         #become_pass=become_user_password, 
     )
 
-    stats = runner.run()
+    stats, success  = runner.run()
+
+    if not success: 
+    	raise ValueError('Job Failed: {0}'.format(stats))
+    else:
+	return str(stats)
 
 
 #def downloadChunks(url, filepath):
@@ -192,7 +197,7 @@ def deploy_server( args, tags=None):
         deploy_parms = vars(args)
         playbook_nm = 'aws.yml'
         
-    runplay (playbook_nm = playbook_nm, host=args.servername, args = deploy_parms, tags=tags)
+    return runplay (playbook_nm = playbook_nm, host=args.servername, args = deploy_parms, tags=tags)
 
 def setup_roles( args, tags=None):
 #    if isinstance(args, dict):
@@ -214,7 +219,7 @@ def setup_roles( args, tags=None):
    #     run_data = { 'servername': args.servername }
 
     #runplay ('setupserver.yml', args.servername,  args= run_data, tags=tags)
-    runplay ('setupserver.yml', args['servername'],  args=args, tags=tags)
+    return runplay ('setupserver.yml', args['servername'],  args=args, tags=tags)
     #runplay ('/var/hfiles/setupserver.yml', args['servername'],  args=args, tags=tags)
 
 #def create_vaultfile( fileloc, passwd, content):

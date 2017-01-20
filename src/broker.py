@@ -117,7 +117,8 @@ class Runner(object):
         ##     hostnames = {"customers": {"hosts": [hostnames]}}
 
         # Set inventory, using most of above objects
-        self.inventory = Inventory(loader=self.loader, variable_manager=self.variable_manager, host_list=self.hosts.name)
+#        self.inventory = Inventory(loader=self.loader, variable_manager=self.variable_manager, host_list=self.hosts.name)
+        self.inventory = Inventory(loader=self.loader, variable_manager=self.variable_manager, host_list='/etc/ansible/hosts')
         self.variable_manager.set_inventory(self.inventory)
 
         # Playbook to run. Assumes it is
@@ -142,9 +143,10 @@ class Runner(object):
         # Test if success for record_logs
         run_success = True
         hosts = sorted(stats.processed.keys())
+	result  = ""
         for h in hosts:
-            t = stats.summarize(h)
-            if t['unreachable'] > 0 or t['failures'] > 0:
+            result  = stats.summarize(h)
+            if result['unreachable'] > 0 or result['failures'] > 0:
                 run_success = False
         #if run_success:
         #    raise Exception("FAILURE OCCURED {0}".format(stats))
@@ -161,4 +163,4 @@ class Runner(object):
         # Remove created temporary files
         os.remove(self.hosts.name)
 
-        return stats
+        return result, run_success

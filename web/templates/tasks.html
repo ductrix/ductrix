@@ -52,6 +52,11 @@
                               <div class="list-view-pf-additional-info-item">
                                 {{ item.status }}
                               </div>
+                                {% if item.status == "failed" %}
+                              <div class="list-view-pf-additional-info-item">
+                                {{ item.exc_info}}
+                              </div>
+                                {% endif %}
                             </div>
                       </div>
                     {% endfor %}

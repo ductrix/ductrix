@@ -100,7 +100,7 @@ def get_vcdata():
 
 @app.route('/')
 def index():
-    return render_template('index.html', dashboard='https://{0}:{1}/dashboard/db/server-information?from=now-30m&to=now-1m'.format(urlparse(request.url_root).hostname, grafana_port))
+    return render_template('index.html', dashboard='http://{0}:{1}/dashboard/db/server-information?from=now-30m&to=now-1m'.format(urlparse(request.url_root).hostname, grafana_port))
 
 
 @app.route('/databases/<id>/')
@@ -118,7 +118,7 @@ def database_info(id):
         dbtype = "mysql"
     
     dbsession.close()
-    return render_template('databaseinfo.html', dbconn='https://{0}:{3}/dashboard/db/{1}-dashboards?var-database={2}'.format(urlparse(request.url_root).hostname, dbtype, databasenm, grafana_port))
+    return render_template('databaseinfo.html', dbconn='http://{0}:{3}/dashboard/db/{1}-dashboards?var-database={2}'.format(urlparse(request.url_root).hostname, dbtype, databasenm, grafana_port))
 
 
 @app.route('/servers/<id>/')
@@ -137,7 +137,7 @@ def server_info(id):
         poolname = result2.poolname
 
     dbsession.close()
-    return render_template('serverinfo.html', serverconn='https://{0}:{3}/dashboard/db/server-data?var-pool={1}&var-server={2}'.format(urlparse(request.url_root).hostname, poolname, servername, grafana_port))
+    return render_template('serverinfo.html', serverconn='http://{0}:{3}/dashboard/db/server-data?var-pool={1}&var-server={2}'.format(urlparse(request.url_root).hostname, poolname, servername, grafana_port))
     #serverconn = "httpss://{0}:9090/@{1}".format("192.168.1.107", servername)
     #return render_template('serverinfo.html', serverconn=serverconn)
     
@@ -151,7 +151,7 @@ def pool_info(id):
         poolname = result.poolname
     
     dbsession.close()
-    return render_template('poolinfo.html', poolconn='https://{0}:{2}/dashboard/db/server-information?var-pool={1}&var-server=All'.format(urlparse(request.url_root).hostname, poolname, grafana_port))
+    return render_template('poolinfo.html', poolconn='http://{0}:{2}/dashboard/db/server-information?var-pool={1}&var-server=All'.format(urlparse(request.url_root).hostname, poolname, grafana_port))
 
 @app.route('/databases')
 def databases():
@@ -301,7 +301,8 @@ def server_create(servername, poolid, args, tags):
                   Sorry ! There was an error while creating {0} server. {1}
                 </div> """.format(servername, inst)
         #return redirect(url_for('servers', message=failed_msg))
-        return failed_msg
+        #return failed_msg
+        raise ValueError(failed_msg)
 
 def database_create(args, tags): 
     try:

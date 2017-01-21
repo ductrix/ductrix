@@ -138,8 +138,6 @@ def server_info(id):
 
     dbsession.close()
     return render_template('serverinfo.html', serverconn='http://{0}:{3}/dashboard/db/server-data?var-pool={1}&var-server={2}'.format(urlparse(request.url_root).hostname, poolname, servername, grafana_port))
-    #serverconn = "httpss://{0}:9090/@{1}".format("192.168.1.107", servername)
-    #return render_template('serverinfo.html', serverconn=serverconn)
     
 @app.route('/pools/<id>/')
 def pool_info(id):
@@ -185,14 +183,7 @@ def databases():
     for serveritem in servertableres: 
         servermap[serveritem.serverid ] = serveritem.servername
 
-    #for db_res in dbtableres:
-    #    databases.append("<tr>")
-    #    databases.append("<td>{0}</td>".format(db_res.dbid))
-    #    databases.append("<td>{0}</td>".format(db_res.dbname))
-    #    databases.append("<td>{0}</td>".format(servermap[db_res.serverid]))
-    #    databases.append("</tr>")
     for db_res in dbtableres:
-        #dbmap[db_res.dbid] = {'dbid' : db_res.dbid, 'dbname' : db_res.dbname, 'serverid': db_res.serverid, 'servername': servermap[db_res.serverid]}
         databases.append({'dbid' : db_res.dbid, 'dbname' : db_res.dbname, 'serverid': db_res.serverid, 'servername': servermap[db_res.serverid]})
     if len(servermap.values()) <= 0 or len(pools) <=0:
         return render_template('databases.html')
@@ -288,20 +279,10 @@ def server_create(servername, poolid, args, tags):
             serverid=str(uuid.uuid4()) ))
         dbsession.commit()
         dbsession.close()
-        success_msg = """
-                <div class="toast-pf alert alert-success alert-dismissable">
-                  <span class="pficon pficon-ok"></span>
-                  Server {0} has been created successfully.
-                </div> """.format(servername)
+        success_msg = """ Server {0} has been created successfully.""".format(servername)
         return success_msg
     except Exception as inst: 
-        failed_msg = """
-                <div class="toast-pf alert alert-danger alert-dimissable">
-                  <span class="pficon pficon-error-circle-o"></span>
-                  Sorry ! There was an error while creating {0} server. {1}
-                </div> """.format(servername, inst)
-        #return redirect(url_for('servers', message=failed_msg))
-        #return failed_msg
+        failed_msg = """ Sorry ! There was an error while creating {0} server. {1} """.format(servername, inst)
         raise ValueError(failed_msg)
 
 def database_create(args, tags): 
@@ -328,21 +309,12 @@ def database_create(args, tags):
         dbsession.commit()
         dbsession.close()
 
-        success_msg = """
-                <div class="toast-pf alert alert-success alert-dismissable">
-                  <span class="pficon pficon-ok"></span>
-                  Database {0} has been created successfully.
-                </div> """.format(args['dbname'])
+        success_msg = """Database {0} has been created successfully""".format(args['dbname'])
         return success_msg
 
     except Exception as inst: 
-        failed_msg = """
-                <div class="toast-pf alert alert-danger alert-dimissable">
-                  <span class="pficon pficon-error-circle-o"></span>
-                  Sorry ! There was an error while creating {0} Database. {1}
-                </div> """.format(args['dbname'] , inst)
-        #return redirect(url_for('servers', message=failed_msg))
-        return failed_msg
+        failed_msg = """Sorry !Error Occured : {0} Database. {1}""".format(args['dbname'] , inst)
+        raise ValueError(failed_msg)
 
 @app.route('/createdatabase', methods=['POST'])
 def create_database():
@@ -436,8 +408,6 @@ def create_pool():
 
         try:
             sys.path.append(ductrix_root)
-            #import ductrix
-            #ductrix.create_vcpassfile(passwd, "{0}".format(vcpass), poolname)
             dbsession.add(pooltable( poolname=poolname, pooltype=pooltype, poolid=poolid))
             dbsession.add(privatepool(username=vcuser,password=hashpass, content=hashcontent, targetserver=vcname, 
 		clusternm=clustername, poolid=poolid, networknm=networkname, storagenm=datastorename, datacenternm=datacentername))
@@ -508,6 +478,7 @@ def create_servers():
     poolresult = dbsession.query(pooltable).filter(pooltable.poolname == poolname).all()
     poolid = None 
     for result in poolresult:
+        args['pooltype'] = result.pooltype
         if result.pooltype == 'vmware':
             poolid = result.poolid
             privatepoolresult = dbsession.query(privatepool).filter(privatepool.poolid == result.poolid).all()
@@ -519,6 +490,7 @@ def create_servers():
         args['network'] = result.networknm
         args['datastore'] = result.storagenm
         args['datacenter'] = result.datacenternm
+        args['osimage'] = 'CENTOS'
         #args['vault_pass'] = result.password
         passwd = result.password
         content = result.content

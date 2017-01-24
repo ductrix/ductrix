@@ -64,7 +64,7 @@ class Options(object):
 
 class Runner(object):
 
-    def __init__(self, hostnames, playbook, run_data, tags=None, become_pass=False, private_key_file=None, verbosity=0):
+    def __init__(self, hostnames, playbook, run_data, tags=None, become_pass=False, hostfile=None, private_key_file=None, verbosity=0):
 
         self.run_data = run_data
 
@@ -118,7 +118,7 @@ class Runner(object):
 
         # Set inventory, using most of above objects
 #        self.inventory = Inventory(loader=self.loader, variable_manager=self.variable_manager, host_list=self.hosts.name)
-        self.inventory = Inventory(loader=self.loader, variable_manager=self.variable_manager, host_list='/etc/ansible/hosts')
+        self.inventory = Inventory(loader=self.loader, variable_manager=self.variable_manager, host_list=hostfile)
         self.variable_manager.set_inventory(self.inventory)
 
         # Playbook to run. Assumes it is

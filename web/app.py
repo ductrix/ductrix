@@ -22,9 +22,11 @@ db = model.dbaccess(db_con_string=app.config['SQLALCHEMY_DATABASE_URI'], usersch
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 app.secret_key=os.urandom(24)
+
 #keyfile = "{0}/key".format(os.path.dirname(os.path.realpath(__file__)))
 #with open (keyfile, "r") as myfile:
 #    app.secret_key=myfile.read()
+
 app.permanent_session_lifetime = timedelta(minutes=10)
 
 q = Queue(connection=conn)
@@ -469,6 +471,7 @@ def create_servers():
         args['network_parms'] = "BOOTPROTO\=static,IPADDR\={0},NETMASK\={1},GATEWAY\={2},DNS1\={3}".format(ipaddr, subnet, gateway, dns1)
 
     args['ssh_user'] = "root"
+    args['osimage'] = 'centos'
 
     pooltable = db.get_pooltbl()
     privatepool = db.get_privatepooltbl()
@@ -490,7 +493,6 @@ def create_servers():
         args['network'] = result.networknm
         args['datastore'] = result.storagenm
         args['datacenter'] = result.datacenternm
-        args['osimage'] = 'CENTOS'
         #args['vault_pass'] = result.password
         passwd = result.password
         content = result.content

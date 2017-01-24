@@ -3,6 +3,7 @@ import argparse
 import getpass
 import configparser
 config = configparser.ConfigParser()
+config.read("config.ini")
 
 
 def runplay(playbook_nm, host, tags, args):
@@ -99,7 +100,7 @@ def deploy_server( args, tags=None):
     return runplay (playbook_nm = playbook_nm, host=args.servername, args = deploy_parms, tags=tags)
 
 def setup_roles( args, tags=None):
-   '''Used to assign and execute a role on a server'''
+    '''Used to assign and execute a role on a server'''
     vpass = args.get('vault_pass',None)
     vault_content = args.get('vault_content',None)
     if vpass:

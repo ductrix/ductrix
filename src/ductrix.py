@@ -3,7 +3,7 @@ import argparse
 import getpass
 import configparser
 config = configparser.ConfigParser()
-config.read("config.ini")
+config.read("/var/ductrix/src/config.ini")
 
 
 def runplay(playbook_nm, host, tags, args):
@@ -75,8 +75,8 @@ def deploy_server( args, tags=None):
 
         deploy_parms = {
                 'name': args.servername, 
-                'vmdk_file': config.get(args.osimage, 'vmdk'),
-                'ovf_file': config.get(args.osimage, 'ovf'),
+                'vmdk_file': "{0}/{1}".format(config.get('settings', 'image_loc'), config.get(args.osimage, 'vmdk')),,
+                'ovf_file': "{0}/{1}".format(config.get('settings','image_loc'), config.get(args.osimage, 'ovf')),
                 'cluster': args.cluster,
                 'pooltarget': args.pooltarget,
                 'poolname': args.poolname,

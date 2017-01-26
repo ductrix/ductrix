@@ -75,7 +75,7 @@ def deploy_server( args, tags=None):
 
         deploy_parms = {
                 'name': args.servername, 
-                'vmdk_file': "{0}/{1}".format(config.get('settings', 'image_loc'), config.get(args.osimage, 'vmdk')),,
+                'vmdk_file': "{0}/{1}".format(config.get('settings', 'image_loc'), config.get(args.osimage, 'vmdk')),
                 'ovf_file': "{0}/{1}".format(config.get('settings','image_loc'), config.get(args.osimage, 'ovf')),
                 'cluster': args.cluster,
                 'pooltarget': args.pooltarget,

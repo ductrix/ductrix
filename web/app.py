@@ -9,8 +9,7 @@ import string
 import random
 from rq import Queue
 from rq.job import Job
-from worker import conn
-
+from worker import conn 
 config = SafeConfigParser()
 app = Flask(__name__)
 app.config.from_pyfile("config.py")
@@ -102,8 +101,7 @@ def get_vcdata():
 
 @app.route('/')
 def index():
-    return render_template('index.html', dashboard='http://{0}:{1}/dashboard/db/server-information?from=now-30m&to=now-1m'.format(urlparse(request.url_root).hostname, grafana_port))
-
+    return render_template('index.html', dashboard='http://{0}:{1}/dashboard/file/serverinfo.json?from=now-30m&to=now-1m'.format(urlparse(request.url_root).hostname, grafana_port))
 
 @app.route('/databases/<id>/')
 def database_info(id):
@@ -120,7 +118,7 @@ def database_info(id):
         dbtype = "mysql"
     
     dbsession.close()
-    return render_template('databaseinfo.html', dbconn='http://{0}:{3}/dashboard/db/{1}-dashboards?var-database={2}'.format(urlparse(request.url_root).hostname, dbtype, databasenm, grafana_port))
+    return render_template('databaseinfo.html', dbconn='http://{0}:{3}/dashboard/file/{1}.json?var-database={2}'.format(urlparse(request.url_root).hostname, dbtype, databasenm, grafana_port))
 
 
 @app.route('/servers/<id>/')
@@ -139,7 +137,7 @@ def server_info(id):
         poolname = result2.poolname
 
     dbsession.close()
-    return render_template('serverinfo.html', serverconn='http://{0}:{3}/dashboard/db/server-data?var-pool={1}&var-server={2}'.format(urlparse(request.url_root).hostname, poolname, servername, grafana_port))
+    return render_template('serverinfo.html', serverconn='http://{0}:{3}/dashboard/file/serverdata.json?var-pool={1}&var-server={2}'.format(urlparse(request.url_root).hostname, poolname, servername, grafana_port))
     
 @app.route('/pools/<id>/')
 def pool_info(id):
@@ -151,7 +149,7 @@ def pool_info(id):
         poolname = result.poolname
     
     dbsession.close()
-    return render_template('poolinfo.html', poolconn='http://{0}:{2}/dashboard/db/server-information?var-pool={1}&var-server=All'.format(urlparse(request.url_root).hostname, poolname, grafana_port))
+    return render_template('poolinfo.html', poolconn='http://{0}:{2}/dashboard/file/serverinfo.json?var-pool={1}&var-server=All'.format(urlparse(request.url_root).hostname, poolname, grafana_port))
 
 @app.route('/databases')
 def databases():

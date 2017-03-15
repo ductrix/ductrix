@@ -103,6 +103,26 @@ def get_vcdata():
 def index():
     return render_template('index.html', dashboard='http://{0}:{1}/dashboard/file/serverinfo.json?from=now-30m&to=now-1m'.format(urlparse(request.url_root).hostname, grafana_port))
 
+@app.route('/console/<id>/')
+def get_console(id):
+    dbsession = db.get_session()
+    dbtable = db.get_dbtbl()
+    servertable = db.get_servertbl()
+    databaseres = dbsession.query(dbtable).filter(dbtable.dbid == id)
+    for result in databaseres:
+        serverid = result.serverid
+        databasenm = result.dbname
+        dbtype = result.dbtype
+
+    serverres = dbsession.query(servertable).filter(servertable.serverid  == serverid)
+    for result in serverres:
+        servername = result.servername
+        poolid = result.poolid
+
+    port = random.randint(11000,12000)
+    subprocess.Popen(["{0}gotty".format(ductrix_root),"-w", "--port {0}".format(port) , "--once", "{0}@{1}".format(dbtype, servername )])
+    return render_template('console.html', dbconn='http://{0}:{1}'.format(urlparse(request.url_root).hostname, port))
+
 @app.route('/databases/<id>/')
 def database_info(id):
     dbsession = db.get_session()

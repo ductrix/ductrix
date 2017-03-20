@@ -7,6 +7,7 @@ import model
 import uuid
 import string
 import random
+import subprocess
 from rq import Queue
 from rq.job import Job
 from worker import conn 

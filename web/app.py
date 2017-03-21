@@ -121,7 +121,10 @@ def get_console(id):
         poolid = result.poolid
 
     port = random.randint(11000,12000)
-    subprocess.Popen(["{0}gotty".format(ductrix_root),"-w", "--port {0}".format(port) , "--once", "{0}@{1}".format(dbtype, servername )])
+    subprocess.Popen(["{0}gotty".format(ductrix_root),"-w", \
+        "--port", str(port), "--once", "ssh", "-q", \
+        "-oStrictHostKeyChecking=no", "{0}@{1}".format(dbtype, servername )], \
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
     return render_template('console.html', dbconn='http://{0}:{1}'.format(urlparse(request.url_root).hostname, port))
 
 @app.route('/databases/<id>/')

@@ -1,0 +1,675 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_GRAPHITE",
+      "label": "localgraphite",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "graphite",
+      "pluginName": "Graphite"
+    }
+  ],
+  "__requires": [
+    {
+      "type": "panel",
+      "id": "graph",
+      "name": "Graph",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "mtanda-heatmap-epoch-panel",
+      "name": "HeatmapEpoch",
+      "version": "0.1.7"
+    },
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "3.1.1"
+    },
+    {
+      "type": "datasource",
+      "id": "graphite",
+      "name": "Graphite",
+      "version": "1.0.0"
+    }
+  ],
+  "id": null,
+  "title": "Oracle Dashboards",
+  "tags": [],
+  "style": "dark",
+  "timezone": "browser",
+  "editable": true,
+  "hideControls": false,
+  "sharedCrosshair": true,
+  "rows": [
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "aliasColors": {
+            "Administrative": "#967302",
+            "Application": "#890F02",
+            "CPU": "#508642",
+            "Configuration": "#3F2B5B",
+            "System I/O": "#1F78C1",
+            "User I/O": "#0A437C"
+          },
+          "annotate": {
+            "enable": false
+          },
+          "bars": true,
+          "datasource": "${DS_GRAPHITE}",
+          "editable": true,
+          "fill": 4,
+          "grid": {
+            "threshold1": 4,
+            "threshold1Color": "rgba(214, 113, 50, 0.27)",
+            "threshold2": 8,
+            "threshold2Color": "rgba(237, 1, 1, 0.22)",
+            "thresholdLine": false
+          },
+          "id": 3,
+          "legend": {
+            "alignAsTable": true,
+            "avg": true,
+            "current": true,
+            "max": false,
+            "min": false,
+            "rightSide": true,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "resolution": 100,
+          "scale": 1,
+          "seriesOverrides": [],
+          "span": 12,
+          "stack": true,
+          "steppedLine": false,
+          "targets": [
+            {
+              "refId": "A",
+              "target": "alias(sumSeries(collectd.[[pool]]_*.oracle_[[database]].counter-activity_execute_count, *), 'Execute')"
+            },
+            {
+              "refId": "B",
+              "target": "alias(sumSeries(collectd.[[pool]]_*.oracle_[[database]].counter-activity_parse_count, *), 'Parse')"
+            },
+            {
+              "refId": "C",
+              "target": "alias(sumSeries(collectd.[[pool]]_*.oracle_[[database]].counter-activity_user_commits, *), 'Commits')"
+            },
+            {
+              "refId": "D",
+              "target": "alias(sumSeries(collectd.[[pool]]_*.oracle_[[database]].counter-activity_user_rollbacks, *), 'Rollbacks')"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Oracle Activity",
+          "tooltip": {
+            "msResolution": true,
+            "query_as_alias": true,
+            "shared": false,
+            "sort": 0,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "show": true
+          },
+          "yaxes": [
+            {
+              "format": "none",
+              "label": "active session",
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "zerofill": true
+        }
+      ],
+      "title": "New row"
+    },
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "aliasColors": {
+            "Commits": "#99440A",
+            "Execute": "#1F78C1",
+            "Parse": "#890F02",
+            "collectd.KPORACLE1.oracle_KPORADB1.counter-activity_parse_count": "#BF1B00"
+          },
+          "annotate": {
+            "enable": false
+          },
+          "bars": false,
+          "datasource": "${DS_GRAPHITE}",
+          "editable": true,
+          "fill": 5,
+          "grid": {
+            "threshold1": 7500,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": 14000,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 1,
+          "legend": {
+            "alignAsTable": true,
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "rightSide": false,
+            "show": true,
+            "total": false,
+            "values": true
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "resolution": 100,
+          "scale": 1,
+          "seriesOverrides": [
+            {
+              "alias": "MEDIA",
+              "bars": false,
+              "lines": true,
+              "stack": false
+            }
+          ],
+          "span": 12,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "hide": false,
+              "refId": "A",
+              "target": "alias(sumSeries(collectd.*.oracle_[[database]].counter-physicalio_datafile_reads, *), 'Data-Reads')",
+              "textEditor": false
+            },
+            {
+              "hide": false,
+              "refId": "B",
+              "target": "alias(sumSeries(collectd.*.oracle_[[database]].counter-physicalio_datafile_writes, *), 'Data-Writes')"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "IO ACTIVITY",
+          "tooltip": {
+            "msResolution": true,
+            "query_as_alias": true,
+            "shared": false,
+            "sort": 0,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "show": true
+          },
+          "yaxes": [
+            {
+              "format": "kbytes",
+              "label": "",
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "zerofill": true
+        }
+      ],
+      "title": "Row1"
+    },
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "aliasColors": {
+            "Blocks changes": "#EF843C",
+            "Datafile reads": "#EF843C",
+            "Datafile writes": "#890F02",
+            "Logical reads": "#3F6833",
+            "Phisical writes": "#E24D42",
+            "Physical reads": "#1F78C1",
+            "counter-physicalio_datafile_reads": "#7EB26D",
+            "counter-physicalio_datafile_writes": "#EA6460",
+            "counter-physicalio_redo_writes": "#806EB7"
+          },
+          "annotate": {
+            "enable": false
+          },
+          "bars": false,
+          "datasource": "${DS_GRAPHITE}",
+          "editable": true,
+          "fill": 1,
+          "grid": {
+            "threshold1": 12500,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": 20000,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 2,
+          "legend": {
+            "alignAsTable": true,
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "rightSide": false,
+            "show": true,
+            "total": false,
+            "values": true
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "resolution": 100,
+          "scale": 1,
+          "seriesOverrides": [],
+          "span": 4,
+          "stack": true,
+          "steppedLine": false,
+          "targets": [
+            {
+              "refId": "A",
+              "target": "alias(sumSeries(collectd.*.oracle_[[database]].gauge-wait_systemio, *), 'System IO')"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "I/O SYSTEM",
+          "tooltip": {
+            "msResolution": true,
+            "query_as_alias": true,
+            "shared": false,
+            "sort": 0,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "show": true
+          },
+          "yaxes": [
+            {
+              "format": "none",
+              "label": "IO/s",
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "zerofill": true
+        },
+        {
+          "aliasColors": {
+            "Blocks changes": "#EF843C",
+            "Datafile reads": "#EF843C",
+            "Datafile writes": "#890F02",
+            "Logical reads": "#3F6833",
+            "Phisical writes": "#E24D42",
+            "Physical reads": "#1F78C1",
+            "counter-physicalio_datafile_reads": "#7EB26D",
+            "counter-physicalio_datafile_writes": "#EA6460",
+            "counter-physicalio_redo_writes": "#806EB7"
+          },
+          "annotate": {
+            "enable": false
+          },
+          "bars": false,
+          "datasource": "${DS_GRAPHITE}",
+          "editable": true,
+          "fill": 1,
+          "grid": {
+            "threshold1": 12500,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": 20000,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 5,
+          "legend": {
+            "alignAsTable": true,
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "rightSide": false,
+            "show": true,
+            "total": false,
+            "values": true
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "resolution": 100,
+          "scale": 1,
+          "seriesOverrides": [],
+          "span": 4,
+          "stack": true,
+          "steppedLine": false,
+          "targets": [
+            {
+              "refId": "A",
+              "target": "alias(sumSeries(collectd.*.oracle_[[database]].gauge-wait_network, *), 'Network Usage')"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Database Network Traffic",
+          "tooltip": {
+            "msResolution": true,
+            "query_as_alias": true,
+            "shared": false,
+            "sort": 0,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "show": true
+          },
+          "yaxes": [
+            {
+              "format": "KBs",
+              "label": "",
+              "max": null,
+              "min": 0,
+              "show": true
+            },
+            {
+              "format": "short",
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "zerofill": true
+        },
+        {
+          "aliasColors": {
+            "Blocks changes": "#EF843C",
+            "Datafile reads": "#EF843C",
+            "Datafile writes": "#890F02",
+            "Logical reads": "#3F6833",
+            "Phisical writes": "#E24D42",
+            "Physical reads": "#1F78C1",
+            "counter-physicalio_datafile_reads": "#7EB26D",
+            "counter-physicalio_datafile_writes": "#EA6460",
+            "counter-physicalio_redo_writes": "#806EB7"
+          },
+          "annotate": {
+            "enable": false
+          },
+          "bars": false,
+          "datasource": "${DS_GRAPHITE}",
+          "editable": true,
+          "fill": 1,
+          "grid": {
+            "threshold1": 12500,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": 20000,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 4,
+          "legend": {
+            "alignAsTable": true,
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "rightSide": false,
+            "show": true,
+            "total": false,
+            "values": true
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "resolution": 100,
+          "scale": 1,
+          "seriesOverrides": [],
+          "span": 4,
+          "stack": true,
+          "steppedLine": false,
+          "targets": [
+            {
+              "refId": "A",
+              "target": "alias(averageSeries(collectd.*.oracle_[[database]].gauge-wait_cpu*, *), 'CPU Usage')"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Database CPU Usage",
+          "tooltip": {
+            "msResolution": true,
+            "query_as_alias": true,
+            "shared": false,
+            "sort": 0,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "show": true
+          },
+          "yaxes": [
+            {
+              "format": "percent",
+              "label": "",
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "zerofill": true
+        }
+      ],
+      "title": "New row"
+    },
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "datasource": "${DS_GRAPHITE}",
+          "editable": true,
+          "error": false,
+          "heatmapOptions": {
+            "axes": [
+              "left",
+              "bottom"
+            ],
+            "bucketRange": [
+              0,
+              100
+            ],
+            "buckets": 10,
+            "historySize": 120,
+            "startTime": 1485475810,
+            "ticks": {
+              "left": 5,
+              "right": 5
+            },
+            "type": "time.heatmap",
+            "windowSize": 60
+          },
+          "id": 6,
+          "isNew": true,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "links": [],
+          "span": 12,
+          "targets": [
+            {
+              "delta": true,
+              "hide": false,
+              "refId": "A",
+              "target": "absolute(collectd.*.oracle_KPORADB1.gauge-wait_cpu)"
+            },
+            {
+              "delta": true,
+              "hide": false,
+              "refId": "B",
+              "target": "absolute(collectd.*.oracle_orcl2.gauge-wait_cpu)"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Panel Title",
+          "type": "mtanda-heatmap-epoch-panel"
+        }
+      ],
+      "title": "New row"
+    }
+  ],
+  "time": {
+    "from": "now-30m",
+    "to": "now-15s"
+  },
+  "timepicker": {
+    "collapse": false,
+    "enable": true,
+    "notice": false,
+    "now": true,
+    "nowDelay": "15s",
+    "refresh_intervals": [
+      "5s",
+      "15s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "status": "Stable",
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "2h",
+      "3h",
+      "",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ],
+    "type": "timepicker"
+  },
+  "templating": {
+    "enable": false,
+    "list": [
+      {
+        "current": {},
+        "datasource": "${DS_GRAPHITE}",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Database",
+        "multi": false,
+        "name": "database",
+        "options": [],
+        "query": "collectd.*.oracle*",
+        "refresh": 1,
+        "regex": "^[^_]*_(.*)$",
+        "type": "query"
+      },
+      {
+        "current": {},
+        "datasource": "${DS_GRAPHITE}",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Pool",
+        "multi": false,
+        "name": "pool",
+        "options": [],
+        "query": "collectd.*",
+        "refresh": 1,
+        "regex": "(.*?)_.*",
+        "type": "query"
+      }
+    ]
+  },
+  "annotations": {
+    "enable": false,
+    "list": []
+  },
+  "refresh": "5s",
+  "schemaVersion": 12,
+  "version": 11,
+  "links": [],
+  "gnetId": null
+}

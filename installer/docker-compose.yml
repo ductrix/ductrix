@@ -1,0 +1,46 @@
+version: '2'
+services: 
+  graphite: 
+    image: hopsoft/graphite-statsd
+    restart: always
+    ports: 
+     - "80:80"
+     - "2003-2004:2003-2004"
+     - "2023-2024:2023-2024"
+     - "8125:8125/udp"
+     - "8126:8126"
+  redis: 
+    image: "redis:alpine"
+    ports:
+     - "6379:6379"
+  grafana:
+    depends_on:
+      - graphite
+    build: ductrix-grafana 
+    ports:
+     - "3000:3000"
+    links:
+     - graphite
+  dbhost:  
+    build: ductrix-postgres
+    ports:
+     - "5432:5432"
+    volumes: 
+     - db_data:/etc/postgresql
+     - db_data:/var/log/postgresql
+     - db_data:/var/lib/postgresql
+  ductrix:
+    depends_on:
+      - dbhost 
+      - grafana
+      - redis
+    build: ductrix-main
+    ports:
+     - "443:443"
+    links:
+     - dbhost
+     - grafana
+     - redis
+
+volumes:
+    db_data:
